@@ -6,13 +6,18 @@ Base URL local: `http://localhost:8080`. Erros seguem o formato `ProblemDetail` 
 
 Todas as rotas, exceto o login e `/actuator/health`, exigem o cabeçalho `Authorization: Bearer <token>`. Sem token ou com token inválido a resposta é `401`; com perfil sem permissão, `403`.
 
-`POST /api/v1/auth/login` com `{ "email": "...", "password": "..." }` devolve `{ "token": "...", "expiresAt": "..." }`. O token vale 8 horas.
+`POST /api/v1/auth/login` com `{ "email": "...", "password": "..." }` devolve `{ "token": "...", "expiresAt": "...", "mustChangePassword": false }`. O token vale 8 horas.
+
+Membros cadastrados pelo admin recebem uma **senha provisória** e começam com `mustChangePassword: true`: até trocarem a senha, só conseguem usar `GET /api/v1/me` e `PUT /api/v1/me/password` (o resto responde `403`).
+
+A cada requisição a API confere a situação do membro: conta **bloqueada** perde o acesso na hora (`401`), mesmo com token ainda válido.
 
 Após 5 senhas erradas seguidas, a conta fica bloqueada por 15 minutos. Toda falha de login responde `401` com a mesma mensagem, para não revelar quais e-mails existem.
 
 | Ação | Admin | Coordenador | Voluntário |
 |---|---|---|---|
 | Gerenciar equipe (`/api/v1/staff-members`) | ✅ | ❌ | ❌ |
+| Ver e editar o próprio perfil (`/api/v1/me`) | ✅ | ✅ | ✅ |
 | Cadastrar, editar e inativar beneficiários | ✅ | ✅ | ❌ |
 | Criar atividades | ✅ | ✅ | ❌ |
 | Listar beneficiários e atividades | ✅ | ✅ | ✅ |
@@ -23,9 +28,19 @@ Após 5 senhas erradas seguidas, a conta fica bloqueada por 15 minutos. Toda fal
 | Método | Rota | Descrição | Respostas |
 |---|---|---|---|
 | `GET` | `/api/v1/staff-members` | Lista a equipe | `200` |
-| `POST` | `/api/v1/staff-members` | Cadastra um membro | `201`, `400`, `409` |
+| `POST` | `/api/v1/staff-members` | Cadastra um membro com senha provisória | `201`, `400`, `409` |
+| `POST` | `/api/v1/staff-members/{id}/block` | Bloqueia o acesso (o admin não bloqueia a si mesmo) | `200`, `400`, `404` |
+| `POST` | `/api/v1/staff-members/{id}/unblock` | Desbloqueia | `200`, `404` |
 
-Corpo do `POST`: `fullName`, `email` (único), `password` (8 a 72 caracteres), `memberType` (`VOLUNTEER`, `PROFESSIONAL`, `COORDINATOR`) e `role` (`ROLE_ADMIN`, `ROLE_COORDINATOR`, `ROLE_VOLUNTEER`).
+Corpo do `POST`: `fullName`, `email` (único), `password` (senha provisória, 8 a 72 caracteres), `memberType` (`VOLUNTEER`, `PROFESSIONAL`, `COORDINATOR`) e `role` (`ROLE_ADMIN`, `ROLE_COORDINATOR`, `ROLE_VOLUNTEER`).
+
+## Perfil
+
+| Método | Rota | Descrição | Respostas |
+|---|---|---|---|
+| `GET` | `/api/v1/me` | Dados do membro logado | `200` |
+| `PUT` | `/api/v1/me` | Altera o nome (`{ "fullName": "..." }`) | `200`, `400` |
+| `PUT` | `/api/v1/me/password` | Troca a senha (`{ "currentPassword": "...", "newPassword": "..." }`) | `204`, `400` |
 
 ## Beneficiários
 
