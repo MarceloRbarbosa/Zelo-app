@@ -37,6 +37,15 @@ public class BeneficiaryService {
 		return Set.copyOf(repository.findIdsByIdInAndStatus(ids, BeneficiaryStatus.ACTIVE));
 	}
 
+	@Transactional(readOnly = true)
+	public List<BeneficiaryContact> findActiveContacts(Collection<Long> ids) {
+		return repository.findAllByIdInAndStatus(ids, BeneficiaryStatus.ACTIVE)
+			.stream()
+			.map(beneficiary -> new BeneficiaryContact(beneficiary.getId(), beneficiary.getFullName(),
+					beneficiary.getPhoneNumber()))
+			.toList();
+	}
+
 	@Transactional
 	public BeneficiaryResponse create(BeneficiaryRequest request) {
 		String documentNumber = request.documentNumber();
