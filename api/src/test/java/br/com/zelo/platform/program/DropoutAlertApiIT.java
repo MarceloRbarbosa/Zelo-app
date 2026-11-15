@@ -14,9 +14,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
+import br.com.zelo.platform.ActiveAccountsTestConfiguration;
 import br.com.zelo.platform.TestcontainersConfiguration;
 
-@Import(TestcontainersConfiguration.class)
+@Import({ TestcontainersConfiguration.class, ActiveAccountsTestConfiguration.class })
 @SpringBootTest
 @AutoConfigureMockMvc
 class DropoutAlertApiIT {

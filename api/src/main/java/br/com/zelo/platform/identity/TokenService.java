@@ -36,7 +36,7 @@ public class TokenService {
 			.build();
 		JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
 		String token = encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
-		return new LoginResponse(token, expiresAt);
+		return new LoginResponse(token, expiresAt, staff.isMustChangePassword());
 	}
 
 }

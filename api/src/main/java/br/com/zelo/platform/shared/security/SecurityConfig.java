@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -39,7 +40,8 @@ public class SecurityConfig {
 	private static final int MIN_SECRET_BYTES = 32;
 
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+	SecurityFilterChain securityFilterChain(HttpSecurity http, AccountStatusChecker accountStatusChecker)
+			throws Exception {
 		http.csrf(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.POST, "/api/v1/auth/login")
@@ -49,7 +51,9 @@ public class SecurityConfig {
 				.anyRequest()
 				.authenticated())
 			.oauth2ResourceServer(server -> server
-				.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
+				.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+			// Not a bean on purpose: as a bean Spring Boot would also register it outside the security chain.
+			.addFilterAfter(new AccountStatusFilter(accountStatusChecker), BearerTokenAuthenticationFilter.class);
 		return http.build();
 	}
 

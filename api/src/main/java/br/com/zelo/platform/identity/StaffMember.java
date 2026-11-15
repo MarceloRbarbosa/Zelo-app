@@ -51,6 +51,9 @@ public class StaffMember {
 	@Column(name = "locked_until")
 	private Instant lockedUntil;
 
+	@Column(name = "must_change_password", nullable = false)
+	private boolean mustChangePassword;
+
 	protected StaffMember() {
 	}
 
@@ -61,6 +64,14 @@ public class StaffMember {
 		this.passwordHash = passwordHash;
 		this.memberType = memberType;
 		this.role = role;
+	}
+
+	// Members created by an admin get a provisional password and must replace it on first login.
+	public static StaffMember withProvisionalPassword(String fullName, String email, String passwordHash,
+			StaffMemberType memberType, StaffRole role) {
+		StaffMember staff = new StaffMember(fullName, email, passwordHash, memberType, role);
+		staff.mustChangePassword = true;
+		return staff;
 	}
 
 	@PrePersist
@@ -83,6 +94,25 @@ public class StaffMember {
 			lockedUntil = now.plus(lockDuration);
 			failedLoginAttempts = 0;
 		}
+	}
+
+	public void changePassword(String newPasswordHash) {
+		this.passwordHash = newPasswordHash;
+		this.mustChangePassword = false;
+	}
+
+	public void rename(String fullName) {
+		this.fullName = fullName;
+	}
+
+	public void block() {
+		this.status = StaffStatus.BLOCKED;
+	}
+
+	public void unblock() {
+		this.status = StaffStatus.ACTIVE;
+		this.failedLoginAttempts = 0;
+		this.lockedUntil = null;
 	}
 
 	public void registerSuccessfulLogin() {
@@ -124,6 +154,10 @@ public class StaffMember {
 
 	public Instant getLockedUntil() {
 		return lockedUntil;
+	}
+
+	public boolean isMustChangePassword() {
+		return mustChangePassword;
 	}
 
 }

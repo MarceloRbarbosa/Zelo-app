@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.zelo.platform.shared.exception.ConflictException;
 import br.com.zelo.platform.shared.exception.InvalidRequestException;
+import br.com.zelo.platform.shared.exception.NotFoundException;
 
 @Service
 public class StaffMemberService {
@@ -29,16 +30,34 @@ public class StaffMemberService {
 
 	@Transactional
 	public StaffMemberResponse create(StaffMemberRequest request) {
-		if (request.role() == StaffRole.ROLE_BENEFICIARY) {
-			throw new InvalidRequestException("Role ROLE_BENEFICIARY is not available yet");
-		}
 		String email = request.email().toLowerCase(Locale.ROOT);
 		if (repository.existsByEmail(email)) {
 			throw new ConflictException("E-mail already registered");
 		}
-		StaffMember staff = new StaffMember(request.fullName(), email, passwordEncoder.encode(request.password()),
-				request.memberType(), request.role());
+		StaffMember staff = StaffMember.withProvisionalPassword(request.fullName(), email,
+				passwordEncoder.encode(request.password()), request.memberType(), request.role());
 		return StaffMemberResponse.from(repository.save(staff));
+	}
+
+	@Transactional
+	public StaffMemberResponse block(Long id, Long currentStaffId) {
+		if (id.equals(currentStaffId)) {
+			throw new InvalidRequestException("You cannot block your own account");
+		}
+		StaffMember staff = find(id);
+		staff.block();
+		return StaffMemberResponse.from(staff);
+	}
+
+	@Transactional
+	public StaffMemberResponse unblock(Long id) {
+		StaffMember staff = find(id);
+		staff.unblock();
+		return StaffMemberResponse.from(staff);
+	}
+
+	private StaffMember find(Long id) {
+		return repository.findById(id).orElseThrow(() -> new NotFoundException("Staff member " + id + " not found"));
 	}
 
 }

@@ -49,7 +49,7 @@ class AuthServiceTest {
 	void validCredentialsIssueTokenAndResetFailedAttempts() {
 		staff.registerFailedLogin(NOW, 5, AuthService.LOCK_DURATION);
 		when(passwordEncoder.matches("secret123", "real-hash")).thenReturn(true);
-		LoginResponse token = new LoginResponse("token", NOW.plus(TokenService.TOKEN_VALIDITY));
+		LoginResponse token = new LoginResponse("token", NOW.plus(TokenService.TOKEN_VALIDITY), false);
 		when(tokenService.issue(staff, NOW)).thenReturn(token);
 
 		assertThat(service.login(new LoginRequest("ANA@zelo.org", "secret123"))).isEqualTo(token);

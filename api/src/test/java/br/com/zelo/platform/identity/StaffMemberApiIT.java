@@ -16,9 +16,10 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
+import br.com.zelo.platform.ActiveAccountsTestConfiguration;
 import br.com.zelo.platform.TestcontainersConfiguration;
 
-@Import(TestcontainersConfiguration.class)
+@Import({ TestcontainersConfiguration.class, ActiveAccountsTestConfiguration.class })
 @SpringBootTest
 @AutoConfigureMockMvc
 class StaffMemberApiIT {
@@ -46,6 +47,7 @@ class StaffMemberApiIT {
 		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(BODY))
 			.andExpect(status().isCreated())
 			.andExpect(jsonPath("$.email").value("bia@zelo.org"))
+			.andExpect(jsonPath("$.mustChangePassword").value(true))
 			.andExpect(jsonPath("$.password").doesNotExist())
 			.andExpect(jsonPath("$.passwordHash").doesNotExist());
 
@@ -63,7 +65,7 @@ class StaffMemberApiIT {
 	}
 
 	@Test
-	void beneficiaryRoleIsNotAvailableYet() throws Exception {
+	void beneficiaryRoleIsRejectedBecauseBeneficiariesHaveNoAccess() throws Exception {
 		mockMvc
 			.perform(post(URL).with(admin())
 				.contentType(MediaType.APPLICATION_JSON)
