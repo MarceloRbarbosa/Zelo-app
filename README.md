@@ -1,4 +1,4 @@
-# Zelo
+# Zelo [![CI](https://github.com/MarceloRbarbosa/Zelo-app/actions/workflows/ci.yml/badge.svg)](https://github.com/MarceloRbarbosa/Zelo-app/actions/workflows/ci.yml)
 
 Aplicação web (PWA) para organizações do Terceiro Setor que troca o controle em papel por um fluxo digital: cadastro de beneficiários, chamada diária nas atividades e alerta quando um beneficiário acumula faltas e corre risco de evasão (**ODS 4 — Educação de Qualidade**).
 
