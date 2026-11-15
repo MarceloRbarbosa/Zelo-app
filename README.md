@@ -27,6 +27,8 @@ cd api
 ./mvnw spring-boot:run
 ```
 
+Testes unitários e de integração: `cd api && ./mvnw verify` (requer Docker). O relatório de cobertura fica em `api/target/site/jacoco/index.html`.
+
 ```bash
 # Web — http://localhost:5173
 cd web
