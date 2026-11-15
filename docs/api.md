@@ -2,6 +2,31 @@
 
 Base URL local: `http://localhost:8080`. Erros seguem o formato `ProblemDetail` (RFC 9457).
 
+## Autenticação
+
+Todas as rotas, exceto o login e `/actuator/health`, exigem o cabeçalho `Authorization: Bearer <token>`. Sem token ou com token inválido a resposta é `401`; com perfil sem permissão, `403`.
+
+`POST /api/v1/auth/login` com `{ "email": "...", "password": "..." }` devolve `{ "token": "...", "expiresAt": "..." }`. O token vale 8 horas.
+
+Após 5 senhas erradas seguidas, a conta fica bloqueada por 15 minutos. Toda falha de login responde `401` com a mesma mensagem, para não revelar quais e-mails existem.
+
+| Ação | Admin | Coordenador | Voluntário |
+|---|---|---|---|
+| Gerenciar equipe (`/api/v1/staff-members`) | ✅ | ❌ | ❌ |
+| Cadastrar, editar e inativar beneficiários | ✅ | ✅ | ❌ |
+| Criar atividades | ✅ | ✅ | ❌ |
+| Listar beneficiários e atividades | ✅ | ✅ | ✅ |
+| Lançar chamada e ver alertas de evasão | ✅ | ✅ | ✅ |
+
+## Equipe
+
+| Método | Rota | Descrição | Respostas |
+|---|---|---|---|
+| `GET` | `/api/v1/staff-members` | Lista a equipe | `200` |
+| `POST` | `/api/v1/staff-members` | Cadastra um membro | `201`, `400`, `409` |
+
+Corpo do `POST`: `fullName`, `email` (único), `password` (8 a 72 caracteres), `memberType` (`VOLUNTEER`, `PROFESSIONAL`, `COORDINATOR`) e `role` (`ROLE_ADMIN`, `ROLE_COORDINATOR`, `ROLE_VOLUNTEER`).
+
 ## Beneficiários
 
 | Método | Rota | Descrição | Respostas |
@@ -97,3 +122,10 @@ As tabelas são criadas pelo Flyway ao subir a API. Sem variáveis definidas, a 
 | `DB_URL` | `jdbc:postgresql://localhost:5432/zelo` |
 | `DB_USERNAME` | `zelo` |
 | `DB_PASSWORD` | `zelo` |
+
+## Segurança
+
+| Variável | Obrigatória | Uso |
+|---|---|---|
+| `JWT_SECRET` | sim | chave de assinatura dos tokens, com pelo menos 32 bytes; sem ela a API não sobe |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | não | criam o primeiro administrador se ainda não existir nenhum |

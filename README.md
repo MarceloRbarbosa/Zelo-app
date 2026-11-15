@@ -9,7 +9,7 @@ Projeto piloto com a ONG **Lar de Margarida** (Tamoios, Cabo Frio - RJ).
 - [x] **RF01 — Beneficiários:** cadastro com validação, documento único e exclusão lógica (API)
 - [x] **RF02 — Chamada digital:** registro de frequência em lote por atividade (API)
 - [x] **RF03 — Alerta de evasão:** beneficiários com 3 ou mais faltas consecutivas (API)
-- [ ] Autenticação e controle de acesso por perfil
+- [x] Autenticação e controle de acesso por perfil (API)
 
 ## Stack
 
@@ -24,8 +24,12 @@ Projeto piloto com a ONG **Lar de Margarida** (Tamoios, Cabo Frio - RJ).
 # API — http://localhost:8080
 docker compose up -d
 cd api
+export JWT_SECRET=$(openssl rand -base64 32)
+export ADMIN_EMAIL=admin@zelo.local ADMIN_PASSWORD='troque-esta-senha'
 ./mvnw spring-boot:run
 ```
+
+O primeiro administrador é criado a partir de `ADMIN_EMAIL` e `ADMIN_PASSWORD`. Detalhes de login e perfis em [docs/api.md](docs/api.md).
 
 Testes unitários e de integração: `cd api && ./mvnw verify` (requer Docker). O relatório de cobertura fica em `api/target/site/jacoco/index.html`.
 
