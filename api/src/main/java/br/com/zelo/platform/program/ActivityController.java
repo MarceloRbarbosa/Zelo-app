@@ -6,6 +6,7 @@ import java.util.List;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,11 +23,13 @@ public class ActivityController {
 		this.service = service;
 	}
 
+	@PreAuthorize("hasAnyRole('ADMIN', 'COORDINATOR', 'VOLUNTEER')")
 	@GetMapping
 	public List<ActivityResponse> list() {
 		return service.listActive();
 	}
 
+	@PreAuthorize("hasAnyRole('ADMIN', 'COORDINATOR')")
 	@PostMapping
 	public ResponseEntity<ActivityResponse> create(@Valid @RequestBody ActivityRequest request) {
 		ActivityResponse created = service.create(request);
