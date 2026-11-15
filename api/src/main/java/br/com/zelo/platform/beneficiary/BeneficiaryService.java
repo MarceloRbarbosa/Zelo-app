@@ -1,6 +1,8 @@
 package br.com.zelo.platform.beneficiary;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,11 @@ public class BeneficiaryService {
 	@Transactional(readOnly = true)
 	public BeneficiaryResponse findById(Long id) {
 		return BeneficiaryResponse.from(findActive(id));
+	}
+
+	@Transactional(readOnly = true)
+	public Set<Long> findActiveIds(Collection<Long> ids) {
+		return Set.copyOf(repository.findIdsByIdInAndStatus(ids, BeneficiaryStatus.ACTIVE));
 	}
 
 	@Transactional
