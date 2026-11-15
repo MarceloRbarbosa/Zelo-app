@@ -1,5 +1,6 @@
 package br.com.zelo.platform.program;
 
+import static br.com.zelo.platform.SecurityTestSupport.admin;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -43,7 +44,7 @@ class ActivityApiIT {
 				{"title": "Reading workshop", "recurrencePattern": "WEEKLY_MON_WED", "startDate": "2026-11-02"}
 				""";
 
-		mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body))
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body))
 			.andExpect(status().isCreated())
 			.andExpect(header().string("Location", URL + "/1"))
 			.andExpect(jsonPath("$.status").value("ACTIVE"))
@@ -62,7 +63,7 @@ class ActivityApiIT {
 				('Art', '2026-11-02', 'ACTIVE')
 				""");
 
-		mockMvc.perform(get(URL))
+		mockMvc.perform(get(URL).with(admin()))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.length()").value(2))
 			.andExpect(jsonPath("$[0].title").value("Art"))

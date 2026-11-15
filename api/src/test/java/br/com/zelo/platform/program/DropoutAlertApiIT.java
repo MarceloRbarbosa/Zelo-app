@@ -1,5 +1,6 @@
 package br.com.zelo.platform.program;
 
+import static br.com.zelo.platform.SecurityTestSupport.admin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -58,7 +59,7 @@ class DropoutAlertApiIT {
 		// Davi: 3 absences in a row -> alert with 3
 		attendances(1, 4, "P", "F", "F", "F");
 
-		mockMvc.perform(get(URL))
+		mockMvc.perform(get(URL).with(admin()))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.length()").value(2))
 			.andExpect(jsonPath("$[0].beneficiaryName").value("Ana"))
@@ -76,7 +77,7 @@ class DropoutAlertApiIT {
 		attendances(1, 1, "F", "F");
 		attendances(2, 1, "F", "F");
 
-		mockMvc.perform(get(URL)).andExpect(jsonPath("$.length()").value(0));
+		mockMvc.perform(get(URL).with(admin())).andExpect(jsonPath("$.length()").value(0));
 	}
 
 	@Test
@@ -84,7 +85,7 @@ class DropoutAlertApiIT {
 		attendances(1, 5, "F", "F", "F");
 		attendances(3, 1, "F", "F", "F");
 
-		mockMvc.perform(get(URL)).andExpect(jsonPath("$.length()").value(0));
+		mockMvc.perform(get(URL).with(admin())).andExpect(jsonPath("$.length()").value(0));
 	}
 
 	@Test
@@ -92,7 +93,7 @@ class DropoutAlertApiIT {
 		attendances(1, 1, "F", "F", "F");
 		attendances(2, 2, "F", "F", "F");
 
-		mockMvc.perform(get(URL).param("activityId", "2"))
+		mockMvc.perform(get(URL).with(admin()).param("activityId", "2"))
 			.andExpect(jsonPath("$.length()").value(1))
 			.andExpect(jsonPath("$[0].beneficiaryName").value("Bruno"));
 	}

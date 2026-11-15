@@ -1,5 +1,6 @@
 package br.com.zelo.platform.program;
 
+import static br.com.zelo.platform.SecurityTestSupport.admin;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -31,7 +32,7 @@ class AttendanceControllerTest {
 				{"activityId": 1, "attendanceDate": "2999-01-01", "entries": [{"present": true}]}
 				""";
 
-		mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body))
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body))
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.errors.attendanceDate").exists())
 			.andExpect(jsonPath("$.errors['entries[0].beneficiaryId']").exists());
@@ -45,7 +46,7 @@ class AttendanceControllerTest {
 				{"activityId": 1, "attendanceDate": "2026-11-10", "entries": [{"beneficiaryId": 10, "present": true}]}
 				""";
 
-		mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body))
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body))
 			.andExpect(status().isConflict())
 			.andExpect(jsonPath("$.detail").value("Request conflicts with existing data"));
 	}

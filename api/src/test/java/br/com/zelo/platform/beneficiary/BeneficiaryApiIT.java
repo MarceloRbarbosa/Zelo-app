@@ -1,5 +1,6 @@
 package br.com.zelo.platform.beneficiary;
 
+import static br.com.zelo.platform.SecurityTestSupport.admin;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -40,7 +41,7 @@ class BeneficiaryApiIT {
 
 	@Test
 	void createPersistsBeneficiary() throws Exception {
-		mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body("12345678901")))
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body("12345678901")))
 			.andExpect(status().isCreated())
 			.andExpect(header().string("Location", URL + "/1"))
 			.andExpect(jsonPath("$.status").value("ACTIVE"));
@@ -51,24 +52,24 @@ class BeneficiaryApiIT {
 
 	@Test
 	void createWithDuplicateDocumentReturnsConflict() throws Exception {
-		mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body("12345678901")))
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body("12345678901")))
 			.andExpect(status().isCreated());
 
-		mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body("12345678901")))
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body("12345678901")))
 			.andExpect(status().isConflict());
 	}
 
 	@Test
 	void deleteKeepsRowAsInactiveAndHidesIt() throws Exception {
-		mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body(null)))
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body(null)))
 			.andExpect(status().isCreated());
 
-		mockMvc.perform(delete(URL + "/1")).andExpect(status().isNoContent());
+		mockMvc.perform(delete(URL + "/1").with(admin())).andExpect(status().isNoContent());
 
 		assertThat(jdbcTemplate.queryForObject("SELECT status FROM beneficiaries WHERE id = 1", String.class))
 			.isEqualTo("INACTIVE");
-		mockMvc.perform(get(URL + "/1")).andExpect(status().isNotFound());
-		mockMvc.perform(get(URL)).andExpect(jsonPath("$.length()").value(0));
+		mockMvc.perform(get(URL + "/1").with(admin())).andExpect(status().isNotFound());
+		mockMvc.perform(get(URL).with(admin())).andExpect(jsonPath("$.length()").value(0));
 	}
 
 	private static String body(String documentNumber) {

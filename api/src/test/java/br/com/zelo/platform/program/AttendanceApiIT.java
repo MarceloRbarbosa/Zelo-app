@@ -1,5 +1,6 @@
 package br.com.zelo.platform.program;
 
+import static br.com.zelo.platform.SecurityTestSupport.admin;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -44,7 +45,7 @@ class AttendanceApiIT {
 
 	@Test
 	void registerBatchPersistsAllEntries() throws Exception {
-		mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(batch("2026-11-10", 1, 2)))
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(batch("2026-11-10", 1, 2)))
 			.andExpect(status().isCreated())
 			.andExpect(jsonPath("$.registered").value(2))
 			.andExpect(jsonPath("$.present").value(1))
@@ -55,17 +56,17 @@ class AttendanceApiIT {
 
 	@Test
 	void registerBatchTwiceOnSameDateReturnsConflict() throws Exception {
-		mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(batch("2026-11-10", 1, 2)))
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(batch("2026-11-10", 1, 2)))
 			.andExpect(status().isCreated());
 
-		mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(batch("2026-11-10", 1, 2)))
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(batch("2026-11-10", 1, 2)))
 			.andExpect(status().isConflict());
 		assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM attendances", Integer.class)).isEqualTo(2);
 	}
 
 	@Test
 	void registerBatchWithInactiveBeneficiarySavesNothing() throws Exception {
-		mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(batch("2026-11-10", 1, 3)))
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(batch("2026-11-10", 1, 3)))
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.detail").value("Beneficiaries not found or inactive: [3]"));
 
