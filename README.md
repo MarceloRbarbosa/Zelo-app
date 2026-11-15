@@ -19,7 +19,7 @@ O **Zelo** é uma aplicação web (PWA) para organizações do Terceiro Setor qu
 ## Status
 
 - [x] Estrutura do monorepo (`api` + `web`)
-- [ ] Persistência (JPA + Flyway + PostgreSQL)
+- [x] Persistência (JPA + Flyway + PostgreSQL)
 - [ ] RF01 — Gestão de Beneficiários
 - [ ] RF02 — Chamada Digital em Lote
 - [ ] RF03 — Alertas de Risco de Evasão
@@ -34,7 +34,7 @@ O projeto adota uma arquitetura de **Monorepo** com **Monólito Modular (Package
 ### Back-end (`/api`)
 - **Linguagem e Framework:** Java 25 & Spring Boot 4.1.2
 - **Observabilidade & Validação:** Spring Boot Actuator e Bean Validation
-- **Persistência (planejado):** Spring Data JPA (Hibernate), PostgreSQL 16+ (Supabase) e Flyway Migrations
+- **Persistência:** Spring Data JPA (Hibernate), PostgreSQL 16+ (Supabase) e Flyway Migrations
 - **Segurança (planejado):** Spring Security (JWT Stateless), hash de senhas com BCrypt e controle de acesso por perfis (`RBAC`)
 
 ### Front-end (`/web`)
@@ -46,10 +46,12 @@ O projeto adota uma arquitetura de **Monorepo** com **Monólito Modular (Package
 ## Como Executar Localmente
 
 **Pré-requisitos:** Java 25 e Node.js 24. O Maven não precisa estar instalado: o projeto usa o Maven Wrapper (`./mvnw`).
+Para o back-end também é necessário Docker (banco PostgreSQL local).
 
 ### Back-end
 
 ```bash
+docker compose up -d
 cd api
 ./mvnw spring-boot:run
 ```
