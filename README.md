@@ -40,6 +40,8 @@ npm install
 npm run dev
 ```
 
+Dados fictícios para demonstração (equipe, oficinas, beneficiários e histórico de chamadas), com a API rodando e o banco vazio: `ADMIN_EMAIL=... ADMIN_PASSWORD=... scripts/seed-demo.sh`.
+
 ## Documentação
 
 - [API](docs/api.md): endpoints, validações e configuração do banco
