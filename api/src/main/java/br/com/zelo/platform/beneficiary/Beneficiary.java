@@ -60,6 +60,19 @@ public class Beneficiary {
 		this.createdAt = Instant.now();
 	}
 
+	public void update(String fullName, String documentNumber, LocalDate birthDate, String phoneNumber,
+			String address) {
+		this.fullName = fullName;
+		this.documentNumber = documentNumber;
+		this.birthDate = birthDate;
+		this.phoneNumber = phoneNumber;
+		this.address = address;
+	}
+
+	public void deactivate() {
+		this.status = BeneficiaryStatus.INACTIVE;
+	}
+
 	public Long getId() {
 		return id;
 	}
