@@ -8,7 +8,7 @@ Projeto piloto com a ONG **Lar de Margarida** (Tamoios, Cabo Frio - RJ).
 
 - [x] **RF01 — Beneficiários:** cadastro com validação, documento único e exclusão lógica (API)
 - [x] **RF02 — Chamada digital:** registro de frequência em lote por atividade (API)
-- [ ] **RF03 — Alerta de evasão:** beneficiários com 3 ou mais faltas consecutivas
+- [x] **RF03 — Alerta de evasão:** beneficiários com 3 ou mais faltas consecutivas (API)
 - [ ] Autenticação e controle de acesso por perfil
 
 ## Stack

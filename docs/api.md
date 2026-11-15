@@ -68,6 +68,26 @@ Resposta `201`: `{ "activityId": 1, "attendanceDate": "2026-11-10", "registered"
 
 Erros de validação trazem o campo em `errors`, ex.: `{ "errors": { "entries[0].beneficiaryId": "must not be null" } }`.
 
+## Alertas de evasão
+
+`GET /api/v1/dropout-alerts` lista os beneficiários cuja sequência **atual** de faltas em uma atividade chegou a 3 ou mais, ou seja, as faltas registradas depois da última presença. Quem voltou a comparecer sai da lista. Filtro opcional: `?activityId=1`.
+
+Considera apenas beneficiários e atividades ativos. Ordenado pelo número de faltas, do maior para o menor.
+
+```json
+[
+  {
+    "activityId": 1,
+    "activityTitle": "Oficina de leitura",
+    "beneficiaryId": 7,
+    "beneficiaryName": "Ana Souza",
+    "phoneNumber": "22999990000",
+    "consecutiveAbsences": 4,
+    "lastAttendanceDate": "2026-11-05"
+  }
+]
+```
+
 ## Banco de dados
 
 As tabelas são criadas pelo Flyway ao subir a API. Sem variáveis definidas, a API usa o banco do `compose.yaml`:
