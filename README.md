@@ -6,10 +6,16 @@ Projeto piloto com a ONG **Lar de Margarida** (Tamoios, Cabo Frio - RJ).
 
 ## Funcionalidades
 
-- [x] **RF01 — Beneficiários:** cadastro com validação, documento único e exclusão lógica (API)
-- [x] **RF02 — Chamada digital:** registro de frequência em lote por atividade (API)
-- [x] **RF03 — Alerta de evasão:** beneficiários com 3 ou mais faltas consecutivas (API)
-- [x] Autenticação e controle de acesso por perfil (API)
+- [x] **RF01 — Beneficiários:** cadastro com validação, documento único e exclusão lógica
+- [x] **RF02 — Chamada digital:** registro e correção da chamada do dia, só para alunos matriculados
+- [x] **RF03 — Alerta de evasão:** beneficiários com 3 ou mais faltas consecutivas, com telefone para busca ativa
+- [x] **RF04 — Equipe e acesso:** senha provisória, troca obrigatória no primeiro login, perfil e bloqueio imediato
+- [x] **RF05 — Pesquisa de beneficiários:** por nome (sem diferenciar acentos), documento e turma
+- [x] **RF06 — Turmas:** horários, responsáveis, matrículas e finalização
+- [x] **RF07 — Diário de classe:** grade de presenças por aula, frequência, risco de evasão e impressão
+- [x] **RF08 — Eventos:** responsáveis, inscrição e registro de quem participou
+- [x] **RF09 — Calendário:** aulas das turmas e eventos do mês
+- [x] **RF10 — Assistência:** itens como cesta básica, recebimentos, entregas e saldo (área restrita)
 
 ## Stack
 
@@ -40,7 +46,7 @@ npm install
 npm run dev
 ```
 
-Dados fictícios para demonstração (equipe, oficinas, beneficiários e histórico de chamadas), com a API rodando e o banco vazio: `ADMIN_EMAIL=... ADMIN_PASSWORD=... scripts/seed-demo.sh`.
+Dados fictícios para demonstração (equipe, turmas com matrículas, histórico de chamadas, evento e assistência), com a API rodando e o banco vazio: `ADMIN_EMAIL=... ADMIN_PASSWORD=... scripts/seed-demo.sh` (requer `curl` e `jq`).
 
 ## Documentação
 
