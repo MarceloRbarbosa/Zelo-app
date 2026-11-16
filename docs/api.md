@@ -17,17 +17,22 @@ Após 5 senhas erradas seguidas, a conta fica bloqueada por 15 minutos. Toda fal
 | Ação | Admin | Coordenador | Voluntário |
 |---|---|---|---|
 | Gerenciar equipe (`/api/v1/staff-members`) | ✅ | ❌ | ❌ |
+| Listar a equipe (para escolher responsáveis) | ✅ | ✅ | ❌ |
 | Ver e editar o próprio perfil (`/api/v1/me`) | ✅ | ✅ | ✅ |
 | Cadastrar, editar e inativar beneficiários | ✅ | ✅ | ❌ |
-| Criar atividades | ✅ | ✅ | ❌ |
-| Listar beneficiários e atividades | ✅ | ✅ | ✅ |
-| Lançar chamada e ver alertas de evasão | ✅ | ✅ | ✅ |
+| Criar, editar e finalizar turmas; matricular | ✅ | ✅ | ❌ |
+| Pesquisar beneficiários | ✅ | ✅ | ✅ |
+| Ver turmas, diário, chamada e alertas | ✅ todas | ✅ todas | só das turmas em que é responsável (`403` nas outras) |
+| Ver eventos | ✅ | ✅ | ✅ |
+| Criar, editar, concluir e cancelar eventos | ✅ | ✅ | ❌ |
+| Inscrever beneficiários e marcar presença no evento | ✅ | ✅ | só nos eventos em que é responsável |
+| Assistência: itens, recebimentos e entregas | ✅ | ✅ | ❌ |
 
 ## Equipe
 
 | Método | Rota | Descrição | Respostas |
 |---|---|---|---|
-| `GET` | `/api/v1/staff-members` | Lista a equipe | `200` |
+| `GET` | `/api/v1/staff-members` | Lista a equipe (admin e coordenador) | `200` |
 | `POST` | `/api/v1/staff-members` | Cadastra um membro com senha provisória | `201`, `400`, `409` |
 | `POST` | `/api/v1/staff-members/{id}/block` | Bloqueia o acesso (o admin não bloqueia a si mesmo) | `200`, `400`, `404` |
 | `POST` | `/api/v1/staff-members/{id}/unblock` | Desbloqueia | `200`, `404` |
@@ -46,7 +51,7 @@ Corpo do `POST`: `fullName`, `email` (único), `password` (senha provisória, 8 
 
 | Método | Rota | Descrição | Respostas |
 |---|---|---|---|
-| `GET` | `/api/v1/beneficiaries` | Lista os beneficiários ativos, por nome | `200` |
+| `GET` | `/api/v1/beneficiaries` | Pesquisa os beneficiários ativos | `200`, `400` |
 | `GET` | `/api/v1/beneficiaries/{id}` | Busca um beneficiário ativo | `200`, `404` |
 | `POST` | `/api/v1/beneficiaries` | Cadastra um beneficiário | `201`, `400`, `409` |
 | `PUT` | `/api/v1/beneficiaries/{id}` | Atualiza um beneficiário ativo | `200`, `400`, `404`, `409` |
@@ -74,18 +79,75 @@ Corpo de `POST` e `PUT`:
 
 Erros: `400` dados inválidos, `404` beneficiário inexistente ou inativo, `409` documento já cadastrado.
 
-## Atividades
+Filtros da pesquisa, todos opcionais e combináveis: `name` (parte do nome, sem diferenciar maiúsculas), `documentNumber` (exato), `activityId` (matriculados ativos na turma) e `order` (`ASC` ou `DESC`, padrão `ASC`, pelo nome). Ex.: `GET /api/v1/beneficiaries?name=souza&order=DESC`.
+
+## Turmas
 
 | Método | Rota | Descrição | Respostas |
 |---|---|---|---|
-| `GET` | `/api/v1/activities` | Lista as atividades ativas, por título | `200` |
-| `POST` | `/api/v1/activities` | Cadastra uma atividade | `201`, `400` |
+| `GET` | `/api/v1/activities` | Lista as turmas por título; `?status=FINISHED` para as finalizadas (padrão `ACTIVE`) | `200` |
+| `GET` | `/api/v1/activities/{id}` | Busca uma turma | `200`, `403`, `404` |
+| `POST` | `/api/v1/activities` | Cadastra uma turma | `201`, `400` |
+| `PUT` | `/api/v1/activities/{id}` | Edita dados, horários e responsáveis | `200`, `400`, `404`, `409` |
+| `POST` | `/api/v1/activities/{id}/finish` | Finaliza (`{ "endDate": "2026-12-18" }`) | `200`, `400`, `404`, `409` |
 
-Corpo do `POST`: `title` (obrigatório, até 100), `description` (até 255), `recurrencePattern` (até 50, ex.: `WEEKLY_MON_WED`) e `startDate` (obrigatório).
+Corpo de `POST` e `PUT`:
+
+```json
+{
+  "title": "Capoeira infantil",
+  "description": "Turma da tarde",
+  "startDate": "2026-11-02",
+  "schedules": [{ "dayOfWeek": "MONDAY", "startTime": "14:00", "endTime": "15:30" }],
+  "staffIds": [2, 3]
+}
+```
+
+`title` obrigatório (até 100), `description` até 255, `startDate` obrigatório, ao menos um horário (`dayOfWeek` de `MONDAY` a `SUNDAY`, fim depois do início, sem repetir dia e hora) e ao menos um responsável existente. A resposta traz `endDate`, `schedules` e `staff` (`id` e `fullName`). Turma finalizada não é editada (`409`).
+
+### Matrículas
+
+| Método | Rota | Descrição | Respostas |
+|---|---|---|---|
+| `GET` | `/api/v1/activities/{id}/enrollments` | Alunos da turma, por nome | `200`, `403`, `404` |
+| `POST` | `/api/v1/activities/{id}/enrollments` | Matricula (`{ "beneficiaryId": 7 }`) | `201`, `404`, `409` |
+| `PUT` | `/api/v1/activities/{id}/enrollments/{beneficiaryId}` | Muda o status (`{ "status": "LEFT", "leftAt": "2026-11-20" }` ou `{ "status": "ACTIVE" }`) | `200`, `400`, `404`, `409` |
+
+Status do aluno: `ACTIVE` (cursando) ou `LEFT` (saiu, com `leftAt`). A saída preserva o histórico de chamadas; matricular de novo quem saiu reativa a mesma matrícula. Só beneficiários ativos são matriculados.
+
+### Diário
+
+`GET /api/v1/activities/{id}/diary?from=2026-11-01&to=2026-11-30` (período de até 366 dias):
+
+```json
+{
+  "activityId": 1,
+  "title": "Capoeira infantil",
+  "status": "ACTIVE",
+  "dates": ["2026-11-02", "2026-11-09"],
+  "students": [
+    {
+      "beneficiaryId": 7,
+      "fullName": "Ana Souza",
+      "enrollmentStatus": "ACTIVE",
+      "leftAt": null,
+      "attendanceRate": 75,
+      "dropoutRisk": false,
+      "marks": [{ "date": "2026-11-02", "present": true, "notes": null }]
+    }
+  ]
+}
+```
+
+`dates` são os dias de aula pelos horários, entre o início e o fim da turma, mais qualquer data que já tenha chamada. `attendanceRate` é o percentual de presenças em todas as chamadas do aluno na turma (`null` sem chamadas). `dropoutRisk` segue a regra dos alertas de evasão.
+
+### Aulas do calendário
+
+`GET /api/v1/class-sessions?from=2026-11-01&to=2026-11-30` (até 366 dias, qualquer perfil) lista cada aula do período gerada pelos horários das turmas, dentro do início e fim de cada uma, ordenada por data e hora: `activityId`, `title`, `status`, `date`, `startTime`, `endTime`. O calendário junta essas aulas com os eventos de `GET /api/v1/events`.
 
 ## Chamada
 
-`POST /api/v1/attendances/batch` registra a chamada de uma atividade em uma data. O lote é gravado inteiro ou nada é gravado.
+`POST /api/v1/attendances/batch` registra a chamada de uma turma em uma data. Só entram alunos com matrícula ativa. O lote é gravado inteiro ou nada é gravado.
 
 ```json
 {
@@ -100,19 +162,62 @@ Corpo do `POST`: `title` (obrigatório, até 100), `description` (até 255), `re
 
 Resposta `201`: `{ "activityId": 1, "attendanceDate": "2026-11-10", "registered": 2, "present": 1, "absent": 1 }`.
 
+`PUT /api/v1/attendances/batch`, com o mesmo corpo, **corrige** a chamada da data: altera presença e observação de quem já tem registro e registra quem ainda não tem. Responde `200` com o mesmo formato e tem as mesmas validações, exceto o `409` de chamada já registrada.
+
 | Status | Quando |
 |---|---|
-| `400` | campo inválido, data futura, lista vazia, beneficiário repetido no lote ou beneficiário inexistente/inativo |
-| `404` | atividade inexistente |
-| `409` | atividade encerrada ou chamada já registrada para o beneficiário na data |
+| `400` | campo inválido, data futura, lista vazia, beneficiário repetido no lote, inexistente/inativo ou sem matrícula ativa na turma |
+| `403` | voluntário que não é responsável pela turma |
+| `404` | turma inexistente |
+| `409` | turma finalizada ou chamada já registrada para o beneficiário na data |
 
 Erros de validação trazem o campo em `errors`, ex.: `{ "errors": { "entries[0].beneficiaryId": "must not be null" } }`.
 
+## Eventos
+
+| Método | Rota | Descrição | Respostas |
+|---|---|---|---|
+| `GET` | `/api/v1/events?from=2026-12-01T00:00:00Z&to=2026-12-31T23:59:59Z` | Eventos do período (até 366 dias), por data | `200`, `400` |
+| `GET` | `/api/v1/events/{id}` | Busca um evento | `200`, `404` |
+| `POST` | `/api/v1/events` | Cadastra um evento | `201`, `400` |
+| `PUT` | `/api/v1/events/{id}` | Edita um evento agendado | `200`, `400`, `404`, `409` |
+| `POST` | `/api/v1/events/{id}/complete` | Marca como concluído | `200`, `404`, `409` |
+| `POST` | `/api/v1/events/{id}/cancel` | Cancela | `200`, `404`, `409` |
+
+Corpo de `POST` e `PUT`: `title` (obrigatório, até 150), `description`, `eventDate` (obrigatório, data e hora com fuso, ex.: `2026-12-05T10:00:00-03:00`), `location` (até 150) e `staffIds` (ao menos um responsável existente). Status: `SCHEDULED`, `COMPLETED` ou `CANCELED`; só evento agendado é editado, concluído ou cancelado (`409` nos outros casos). Evento não tem chamada.
+
+### Participantes
+
+| Método | Rota | Descrição | Respostas |
+|---|---|---|---|
+| `GET` | `/api/v1/events/{id}/participants` | Inscritos, por nome | `200`, `403`, `404` |
+| `POST` | `/api/v1/events/{id}/participants` | Inscreve (`{ "beneficiaryId": 7 }`) | `201`, `403`, `404`, `409` |
+| `PUT` | `/api/v1/events/{id}/participants/{beneficiaryId}` | Marca presença (`{ "attended": true }`) | `200`, `403`, `404`, `409` |
+| `DELETE` | `/api/v1/events/{id}/participants/{beneficiaryId}` | Cancela a inscrição | `204`, `403`, `404`, `409` |
+
+Resposta: `beneficiaryId`, `fullName`, `registeredAt` e `attended`. Evento cancelado não aceita mudanças (`409`).
+
+## Assistência
+
+Área restrita a admin e coordenador.
+
+| Método | Rota | Descrição | Respostas |
+|---|---|---|---|
+| `GET` | `/api/v1/assistance/items` | Itens por nome, com `received`, `delivered` e `balance` (recebido menos entregue) | `200` |
+| `POST` | `/api/v1/assistance/items` | Cadastra um item (`{ "name": "Cesta básica", "description": "...", "active": true }`) | `201`, `400`, `409` |
+| `PUT` | `/api/v1/assistance/items/{id}` | Edita ou inativa um item | `200`, `400`, `404`, `409` |
+| `GET` | `/api/v1/assistance/receipts?from=2026-11-01&to=2026-11-30` | Recursos recebidos no período (até 366 dias), mais recentes primeiro | `200`, `400` |
+| `POST` | `/api/v1/assistance/receipts` | Registra um recebimento | `201`, `400`, `404`, `409` |
+| `GET` | `/api/v1/assistance/deliveries?from=...&to=...` ou `?beneficiaryId=7` | Entregas do período ou histórico do beneficiário | `200`, `400` |
+| `POST` | `/api/v1/assistance/deliveries` | Registra uma entrega a um beneficiário ativo | `201`, `400`, `404`, `409` |
+
+Recebimento: `itemId`, `quantity` (maior que zero), `receivedAt` (até hoje), `donor` (até 150) e `notes` (até 255). Entrega: `itemId`, `beneficiaryId`, `quantity`, `deliveredAt` e `notes`. Quem registrou fica gravado. Nome de item é único sem diferenciar maiúsculas (`409`); item inativo não recebe movimentos (`409`). Não há limite de frequência nem bloqueio por saldo: o saldo é informativo.
+
 ## Alertas de evasão
 
-`GET /api/v1/dropout-alerts` lista os beneficiários cuja sequência **atual** de faltas em uma atividade chegou a 3 ou mais, ou seja, as faltas registradas depois da última presença. Quem voltou a comparecer sai da lista. Filtro opcional: `?activityId=1`.
+`GET /api/v1/dropout-alerts` lista os beneficiários cuja sequência **atual** de faltas em uma turma chegou a 3 ou mais, ou seja, as faltas registradas depois da última presença. Quem voltou a comparecer sai da lista. Filtro opcional: `?activityId=1`.
 
-Considera apenas beneficiários e atividades ativos. Ordenado pelo número de faltas, do maior para o menor.
+Considera apenas beneficiários ativos, com matrícula ativa, em turmas ativas. O voluntário vê só as turmas em que é responsável. Ordenado pelo número de faltas, do maior para o menor.
 
 ```json
 [

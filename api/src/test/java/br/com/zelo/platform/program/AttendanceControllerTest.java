@@ -40,7 +40,7 @@ class AttendanceControllerTest {
 
 	@Test
 	void databaseConstraintViolationReturnsConflictWithoutInternalDetails() throws Exception {
-		when(service.registerBatch(any()))
+		when(service.registerBatch(any(), any()))
 			.thenThrow(new DataIntegrityViolationException("duplicate key uk_attendances_activity_beneficiary_date"));
 		String body = """
 				{"activityId": 1, "attendanceDate": "2026-11-10", "entries": [{"beneficiaryId": 10, "present": true}]}

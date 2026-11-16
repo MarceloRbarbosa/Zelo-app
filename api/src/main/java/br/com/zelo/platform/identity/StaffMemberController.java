@@ -27,6 +27,8 @@ public class StaffMemberController {
 		this.service = service;
 	}
 
+	// Coordinators also list the team, to pick who is responsible for activities and events.
+	@PreAuthorize("hasAnyRole('ADMIN', 'COORDINATOR')")
 	@GetMapping
 	public List<StaffMemberResponse> list() {
 		return service.list();

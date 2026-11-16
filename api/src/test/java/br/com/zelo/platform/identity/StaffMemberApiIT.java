@@ -1,7 +1,10 @@
 package br.com.zelo.platform.identity;
 
 import static br.com.zelo.platform.SecurityTestSupport.admin;
+import static br.com.zelo.platform.SecurityTestSupport.coordinator;
+import static br.com.zelo.platform.SecurityTestSupport.volunteer;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -71,6 +74,14 @@ class StaffMemberApiIT {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(BODY.replace("ROLE_VOLUNTEER", "ROLE_BENEFICIARY")))
 			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void coordinatorListsTeamButCannotCreateMembers() throws Exception {
+		mockMvc.perform(get(URL).with(coordinator())).andExpect(status().isOk());
+		mockMvc.perform(post(URL).with(coordinator()).contentType(MediaType.APPLICATION_JSON).content(BODY))
+			.andExpect(status().isForbidden());
+		mockMvc.perform(get(URL).with(volunteer())).andExpect(status().isForbidden());
 	}
 
 }

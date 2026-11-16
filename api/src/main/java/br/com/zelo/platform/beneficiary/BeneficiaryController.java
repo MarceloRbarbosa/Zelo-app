@@ -5,6 +5,7 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -28,8 +30,10 @@ public class BeneficiaryController {
 
 	@PreAuthorize("hasAnyRole('ADMIN', 'COORDINATOR', 'VOLUNTEER')")
 	@GetMapping
-	public List<BeneficiaryResponse> list() {
-		return service.listActive();
+	public List<BeneficiaryResponse> search(@RequestParam(required = false) String name,
+			@RequestParam(required = false) String documentNumber, @RequestParam(required = false) Long activityId,
+			@RequestParam(defaultValue = "ASC") Sort.Direction order) {
+		return service.search(new BeneficiarySearch(name, documentNumber, activityId, order));
 	}
 
 	@PreAuthorize("hasAnyRole('ADMIN', 'COORDINATOR', 'VOLUNTEER')")

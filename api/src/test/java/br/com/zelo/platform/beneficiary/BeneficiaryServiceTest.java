@@ -10,12 +10,15 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 import br.com.zelo.platform.shared.exception.ConflictException;
 import br.com.zelo.platform.shared.exception.NotFoundException;
@@ -27,6 +30,9 @@ class BeneficiaryServiceTest {
 
 	@Mock
 	private BeneficiaryRepository repository;
+
+	@Mock
+	private EnrollmentLookup enrollmentLookup;
 
 	@InjectMocks
 	private BeneficiaryService service;
@@ -98,10 +104,11 @@ class BeneficiaryServiceTest {
 	}
 
 	@Test
-	void listActiveReturnsOnlyActiveBeneficiaries() {
-		when(repository.findAllByStatusOrderByFullNameAsc(BeneficiaryStatus.ACTIVE)).thenReturn(List.of(beneficiary()));
+	void searchByActivityWithoutEnrollmentsSkipsTheQuery() {
+		when(enrollmentLookup.activeBeneficiaryIds(5L)).thenReturn(Set.of());
 
-		assertThat(service.listActive()).hasSize(1);
+		assertThat(service.search(new BeneficiarySearch(null, null, 5L, Sort.Direction.ASC))).isEmpty();
+		verify(repository, never()).findAll(any(Specification.class), any(Sort.class));
 	}
 
 	private static BeneficiaryRequest request(String documentNumber) {

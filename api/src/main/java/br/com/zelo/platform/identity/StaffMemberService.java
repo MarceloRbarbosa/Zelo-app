@@ -1,7 +1,10 @@
 package br.com.zelo.platform.identity;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,25 @@ public class StaffMemberService {
 	@Transactional(readOnly = true)
 	public List<StaffMemberResponse> list() {
 		return repository.findAllByOrderByFullNameAsc().stream().map(StaffMemberResponse::from).toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<StaffSummary> findSummaries(Collection<Long> ids) {
+		return repository.findAllById(ids)
+			.stream()
+			.map(staff -> new StaffSummary(staff.getId(), staff.getFullName()))
+			.toList();
+	}
+
+	// Used when picking who is responsible for an activity or event.
+	@Transactional(readOnly = true)
+	public Set<Long> requireExisting(Collection<Long> ids) {
+		Set<Long> missing = new TreeSet<>(ids);
+		repository.findAllById(ids).forEach(staff -> missing.remove(staff.getId()));
+		if (!missing.isEmpty()) {
+			throw new InvalidRequestException("Staff members not found: " + missing);
+		}
+		return Set.copyOf(ids);
 	}
 
 	@Transactional

@@ -113,7 +113,10 @@ class AuthApiIT {
 	void coordinatorCannotManageStaff() throws Exception {
 		String token = login("coord@zelo.org", "secret123");
 
+		// Listing the team is allowed (to pick who is responsible for an activity); blocking is not.
 		mockMvc.perform(get("/api/v1/staff-members").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+			.andExpect(status().isOk());
+		mockMvc.perform(post("/api/v1/staff-members/1/block").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
 			.andExpect(status().isForbidden());
 	}
 

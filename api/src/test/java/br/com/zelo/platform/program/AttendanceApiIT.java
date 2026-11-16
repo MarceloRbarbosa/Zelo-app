@@ -3,6 +3,7 @@ package br.com.zelo.platform.program;
 import static br.com.zelo.platform.SecurityTestSupport.admin;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -34,7 +35,7 @@ class AttendanceApiIT {
 
 	@BeforeEach
 	void setUp() {
-		jdbcTemplate.execute("TRUNCATE attendances, activities, beneficiaries RESTART IDENTITY");
+		jdbcTemplate.execute("TRUNCATE attendances, activities, beneficiaries RESTART IDENTITY CASCADE");
 		jdbcTemplate.update("""
 				INSERT INTO beneficiaries (full_name, birth_date, phone_number, status) VALUES
 				('Ana Souza', '2012-03-10', '22999990000', 'ACTIVE'),
@@ -42,6 +43,7 @@ class AttendanceApiIT {
 				('Carla Dias', '2013-01-15', '22977770000', 'INACTIVE')
 				""");
 		jdbcTemplate.update("INSERT INTO activities (title, start_date) VALUES ('Reading workshop', '2026-11-02')");
+		jdbcTemplate.update("INSERT INTO enrollments (activity_id, beneficiary_id) VALUES (1, 1), (1, 2), (1, 3)");
 	}
 
 	@Test
@@ -72,6 +74,25 @@ class AttendanceApiIT {
 			.andExpect(jsonPath("$.detail").value("Beneficiaries not found or inactive: [3]"));
 
 		assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM attendances", Integer.class)).isZero();
+	}
+
+	@Test
+	void correctBatchUpdatesExistingMarksAndAddsMissingOnes() throws Exception {
+		String onlyFirstPresent = """
+				{"activityId": 1, "attendanceDate": "2026-11-10", "entries": [{"beneficiaryId": 1, "present": true}]}
+				""";
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(onlyFirstPresent))
+			.andExpect(status().isCreated());
+
+		// Beneficiary 1 is corrected to absent, beneficiary 2 is registered late as present.
+		mockMvc.perform(put(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(batch("2026-11-10", 2, 1)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.registered").value(2))
+			.andExpect(jsonPath("$.present").value(1));
+
+		assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM attendances", Integer.class)).isEqualTo(2);
+		assertThat(jdbcTemplate.queryForObject("SELECT is_present FROM attendances WHERE beneficiary_id = 1",
+				Boolean.class)).isFalse();
 	}
 
 	// First beneficiary is present, second is absent.

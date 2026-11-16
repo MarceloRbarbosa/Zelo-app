@@ -23,6 +23,20 @@ public final class SecurityTestSupport {
 		return role("ROLE_VOLUNTEER");
 	}
 
+	// For tests that need a real staff id in the token subject: volunteers are scoped to their own activities
+	// and some records keep who registered them.
+	public static RequestPostProcessor volunteer(long staffId) {
+		return member(staffId, "ROLE_VOLUNTEER");
+	}
+
+	public static RequestPostProcessor coordinator(long staffId) {
+		return member(staffId, "ROLE_COORDINATOR");
+	}
+
+	private static RequestPostProcessor member(long staffId, String role) {
+		return jwt().jwt(token -> token.subject(String.valueOf(staffId))).authorities(new SimpleGrantedAuthority(role));
+	}
+
 	private static RequestPostProcessor role(String role) {
 		return jwt().authorities(new SimpleGrantedAuthority(role));
 	}

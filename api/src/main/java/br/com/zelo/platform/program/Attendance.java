@@ -44,6 +44,11 @@ public class Attendance {
 		this.notes = notes;
 	}
 
+	public void correct(boolean present, String notes) {
+		this.present = present;
+		this.notes = notes;
+	}
+
 	public Long getId() {
 		return id;
 	}

@@ -1,6 +1,7 @@
 package br.com.zelo.platform.program;
 
 import static br.com.zelo.platform.SecurityTestSupport.admin;
+import static br.com.zelo.platform.SecurityTestSupport.volunteer;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,7 +33,7 @@ class DropoutAlertApiIT {
 
 	@BeforeEach
 	void setUp() {
-		jdbcTemplate.execute("TRUNCATE attendances, activities, beneficiaries RESTART IDENTITY");
+		jdbcTemplate.execute("TRUNCATE attendances, activities, beneficiaries, staff_members RESTART IDENTITY CASCADE");
 		jdbcTemplate.update("""
 				INSERT INTO beneficiaries (full_name, birth_date, phone_number, status) VALUES
 				('Ana', '2012-01-01', '22900000001', 'ACTIVE'),
@@ -47,6 +48,16 @@ class DropoutAlertApiIT {
 				('Music', '2026-10-01', 'ACTIVE'),
 				('Chess', '2026-10-01', 'FINISHED')
 				""");
+		// Everyone is enrolled in every activity; Vera (staff 1) is responsible for Music only.
+		jdbcTemplate.update("""
+				INSERT INTO enrollments (activity_id, beneficiary_id)
+				SELECT a.id, b.id FROM activities a CROSS JOIN beneficiaries b
+				""");
+		jdbcTemplate.update("""
+				INSERT INTO staff_members (full_name, email, password_hash, member_type, role)
+				VALUES ('Vera', 'vera@zelo.local', 'x', 'VOLUNTEER', 'ROLE_VOLUNTEER')
+				""");
+		jdbcTemplate.update("INSERT INTO activity_staff (activity_id, staff_id) VALUES (2, 1)");
 	}
 
 	@Test
@@ -97,6 +108,24 @@ class DropoutAlertApiIT {
 		mockMvc.perform(get(URL).with(admin()).param("activityId", "2"))
 			.andExpect(jsonPath("$.length()").value(1))
 			.andExpect(jsonPath("$[0].beneficiaryName").value("Bruno"));
+	}
+
+	@Test
+	void ignoresBeneficiariesWhoLeftTheActivity() throws Exception {
+		attendances(1, 1, "F", "F", "F");
+		jdbcTemplate.update("UPDATE enrollments SET status = 'LEFT', left_at = '2026-11-04' WHERE beneficiary_id = 1");
+
+		mockMvc.perform(get(URL).with(admin())).andExpect(jsonPath("$.length()").value(0));
+	}
+
+	@Test
+	void volunteerSeesOnlyAlertsOfTheirActivities() throws Exception {
+		attendances(1, 1, "F", "F", "F");
+		attendances(2, 2, "F", "F", "F");
+
+		mockMvc.perform(get(URL).with(volunteer(1)))
+			.andExpect(jsonPath("$.length()").value(1))
+			.andExpect(jsonPath("$[0].activityTitle").value("Music"));
 	}
 
 	// One attendance per day starting on 2026-11-01; "P" = present, "F" = absent.

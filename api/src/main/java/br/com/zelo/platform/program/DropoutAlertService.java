@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.zelo.platform.beneficiary.BeneficiaryContact;
 import br.com.zelo.platform.beneficiary.BeneficiaryService;
+import br.com.zelo.platform.shared.security.CurrentStaff;
 
 @Service
 public class DropoutAlertService {
@@ -29,9 +30,12 @@ public class DropoutAlertService {
 		this.beneficiaryService = beneficiaryService;
 	}
 
+	// Volunteers only see the alerts of the activities they are responsible for.
 	@Transactional(readOnly = true)
-	public List<DropoutAlertResponse> findAlerts(Long activityId) {
-		List<AbsenceStreak> streaks = attendanceRepository.findCurrentAbsenceStreaks(activityId, ABSENCE_THRESHOLD);
+	public List<DropoutAlertResponse> findAlerts(Long activityId, CurrentStaff requester) {
+		Long staffId = requester.volunteer() ? requester.id() : null;
+		List<AbsenceStreak> streaks = attendanceRepository.findCurrentAbsenceStreaks(activityId, staffId,
+				ABSENCE_THRESHOLD);
 		if (streaks.isEmpty()) {
 			return List.of();
 		}
