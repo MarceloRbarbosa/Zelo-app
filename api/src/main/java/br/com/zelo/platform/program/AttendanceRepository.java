@@ -32,6 +32,16 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 			""")
 	List<AttendanceTotals> findTotals(Long activityId);
 
+	@Query("""
+			select a.activityId as activityId, a.attendanceDate as attendanceDate, count(a) as total,
+			       sum(case when a.present = true then 1 else 0 end) as present
+			from Attendance a
+			where a.activityId in :activityIds
+			  and a.attendanceDate between :from and :to
+			group by a.activityId, a.attendanceDate
+			""")
+	List<RollCallTotals> findRollCallTotals(Collection<Long> activityIds, LocalDate from, LocalDate to);
+
 	// Counts only the absences after the last presence, i.e. the current streak. Only beneficiaries still
 	// enrolled count; staffId, when given, limits the result to the activities that member is responsible for.
 	@Query(nativeQuery = true, value = """

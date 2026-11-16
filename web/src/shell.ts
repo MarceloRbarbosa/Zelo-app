@@ -12,7 +12,7 @@ interface NavItem {
 
 // Daily work first; management areas in their own group.
 const NAV: NavItem[] = [
-  { href: '#/', label: 'Agenda', icon: 'calendar', visible: () => true },
+  { href: '#/calendario', label: 'Agenda', icon: 'calendar', visible: () => true },
   { href: '#/turmas', label: 'Turmas', icon: 'book', visible: () => true },
   { href: '#/beneficiarios', label: 'Beneficiários', icon: 'people', visible: () => true },
   { href: '#/eventos', label: 'Eventos', icon: 'star', visible: () => true },
@@ -43,8 +43,8 @@ export function renderShell(root: HTMLElement, onLogout: () => void): HTMLElemen
     'nav',
     { class: 'nav', id: 'menu', 'aria-label': 'Menu principal' },
     el(
-      'div',
-      { class: 'nav__brand' },
+      'a',
+      { href: '#/', class: 'nav__brand', 'aria-label': 'Zelo, Lar de Margarida: página inicial' },
       el('span', { class: 'brand-mark', 'aria-hidden': 'true' }, 'Z'),
       el('div', {}, el('p', { class: 'nav__name' }, 'Zelo'), el('p', { class: 'nav__org' }, 'Lar de Margarida')),
     ),
@@ -95,7 +95,12 @@ export function renderShell(root: HTMLElement, onLogout: () => void): HTMLElemen
     'header',
     { class: 'topbar' },
     toggle,
-    el('p', { class: 'topbar__name' }, el('span', { class: 'brand-mark', 'aria-hidden': 'true' }, 'Z'), 'Zelo'),
+    el(
+      'a',
+      { href: '#/', class: 'topbar__name', 'aria-label': 'Zelo: página inicial' },
+      el('span', { class: 'brand-mark', 'aria-hidden': 'true' }, 'Z'),
+      'Zelo',
+    ),
   );
 
   root.replaceChildren(

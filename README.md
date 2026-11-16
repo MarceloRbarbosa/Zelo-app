@@ -14,8 +14,9 @@ Projeto piloto com a ONG **Lar de Margarida** (Tamoios, Cabo Frio - RJ).
 - [x] **RF06 — Turmas:** horários, responsáveis, matrículas e finalização
 - [x] **RF07 — Diário de classe:** grade de presenças por aula, frequência, risco de evasão e impressão
 - [x] **RF08 — Eventos:** responsáveis, inscrição e registro de quem participou
-- [x] **RF09 — Agenda:** tela inicial com aulas e eventos da ONG, em visão mensal ou semanal
+- [x] **RF09 — Agenda:** aulas e eventos da ONG, em visão mensal ou semanal
 - [x] **RF10 — Assistência:** itens como cesta básica, recebimentos, entregas com busca, saldo e quem registrou (área restrita)
+- [x] **RF11 — Início:** risco de evasão, frequência do mês, chamadas pendentes, próximos eventos e assistência
 
 ## Stack
 

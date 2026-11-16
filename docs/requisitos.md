@@ -26,12 +26,20 @@ Voluntário. Beneficiários não acessam a plataforma.
   - observação por aluno em cada aula;
   - versão para impressão.
 - **RF08 — Eventos:** responsáveis definidos na criação; inscrição de beneficiários; registro de quem compareceu. Evento não tem chamada.
-- **RF09 — Agenda:** tela inicial com a agenda da ONG em visão mensal ou semanal (aulas geradas pelos horários, uma cor por turma, e eventos), com o aviso de risco de evasão acima.
+- **RF09 — Agenda:** agenda da ONG em visão mensal ou semanal (aulas geradas pelos horários, uma cor por turma, e eventos), no item "Agenda" do menu.
 - **RF10 — Assistência:**
   - catálogo de itens a distribuir (a cesta básica é um exemplo);
   - registro de entregas por beneficiário, sem limite de frequência;
   - registro de recursos recebidos, em área separada, com acesso só de admin e coordenador;
   - busca nas entregas por beneficiário e item; recebimentos e entregas mostram quem registrou (conta logada, sem edição).
+- **RF11 — Início:** tela inicial, aberta também pela logo do menu, com o mês corrente até hoje:
+  - aviso de risco de evasão com o nome de cada criança; o nome abre os dados para consulta (turmas, faltas seguidas, última falta e telefone);
+  - frequência do mês (presenças sobre o total de registros das chamadas), beneficiários ativos, turmas ativas com alunos cursando e saídas de turma no mês;
+  - frequência por turma;
+  - chamadas pendentes: aula pelos horários, de turma ativa com alunos, sem chamada registrada;
+  - eventos agendados nos próximos 30 dias;
+  - só admin e coordenação: entregas do mês por item e itens ativos sem saldo.
+  O voluntário vê os números só das turmas em que é responsável.
 
 ## Modelo de dados
 - **`staff_members`:** `id`, `full_name` (150, not null), `email` (100, unique, not null), `password_hash` (BCrypt), `member_type` (`VOLUNTEER`/`PROFESSIONAL`/`COORDINATOR`), `role` (`ROLE_ADMIN`/`ROLE_COORDINATOR`/`ROLE_VOLUNTEER`), `status` (`ACTIVE`/`BLOCKED`), `must_change_password`, `failed_login_attempts`, `locked_until`, `created_at`.

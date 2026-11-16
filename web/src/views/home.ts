@@ -1,7 +1,7 @@
-import { api, type ClassSession, type DropoutAlert, type ZeloEvent } from '../api.ts';
+import { api, type ClassSession, type ZeloEvent } from '../api.ts';
 import { context } from '../context.ts';
 import { icon } from '../design-system/icons.ts';
-import { avatar, button, errorText, link, loading, message, openDialog, pageHeader } from '../design-system/ui.ts';
+import { button, errorText, link, loading, message, pageHeader } from '../design-system/ui.ts';
 import { el } from '../dom.ts';
 import {
   addDays,
@@ -39,85 +39,18 @@ function startOfWeek(iso: string): string {
 }
 
 export async function renderHome(main: HTMLElement): Promise<void> {
-  const firstName = context.profile.fullName.split(' ')[0];
   const actions: HTMLElement[] = [];
   if (context.manages) {
     actions.push(link('Novo evento', '#/eventos/novo', 'secondary', { icon: 'plus' }));
   }
   const todayAction = el('span', {});
   actions.push(todayAction);
-  const strip = el('div', {});
   const agenda = el('section', { class: 'agenda-card', 'aria-label': 'Agenda da ONG' }, loading());
-  main.replaceChildren(pageHeader(`Olá, ${firstName}`, formatLongDay(today()), ...actions), strip, agenda);
+  main.replaceChildren(pageHeader('Agenda', formatLongDay(today()), ...actions), agenda);
 
   const view: View = window.matchMedia('(max-width: 719px)').matches ? 'week' : 'month';
   void renderAgenda(agenda, view, today());
-  void renderRiskStrip(strip);
   void renderTodayAction(todayAction);
-}
-
-async function renderRiskStrip(strip: HTMLElement): Promise<void> {
-  let alerts: DropoutAlert[];
-  try {
-    alerts = await api.listAlerts();
-  } catch {
-    return;
-  }
-  if (alerts.length === 0) {
-    return;
-  }
-  const names = alerts.slice(0, 3).map((alert) => avatar(alert.beneficiaryName));
-  const more = button('Ver e ligar', () => openRiskList(alerts), { variant: 'sun' });
-  strip.replaceChildren(
-    el(
-      'div',
-      { class: 'risk-strip', role: 'status' },
-      icon('alert'),
-      el('span', { class: 'risk-strip__faces', 'aria-hidden': 'true' }, ...names),
-      el(
-        'p',
-        { class: 'risk-strip__text' },
-        el('strong', {}, `${alerts.length} ${alerts.length === 1 ? 'criança em risco' : 'crianças em risco'} de evasão.`),
-        ' Faltaram 3 vezes ou mais seguidas: ligue para as famílias.',
-      ),
-      more,
-    ),
-  );
-}
-
-// The full list opens in place, with a call button per family.
-function openRiskList(alerts: DropoutAlert[]): void {
-  openDialog({
-    title: 'Risco de evasão',
-    icon: 'alert',
-    tone: 'warning',
-    body: [
-      el(
-        'ul',
-        { class: 'dialog-list' },
-        ...alerts.map((alert) =>
-          el(
-            'li',
-            { class: 'dialog__person' },
-            avatar(alert.beneficiaryName),
-            el(
-              'div',
-              { class: 'row__main' },
-              el('span', { class: 'row__title' }, alert.beneficiaryName),
-              el('span', { class: 'row__meta' }, `${alert.activityTitle}, ${alert.consecutiveAbsences} faltas seguidas`),
-            ),
-            el(
-              'a',
-              { class: 'button button--secondary button--small', href: `tel:${alert.phoneNumber}` },
-              icon('phone'),
-              'Ligar',
-            ),
-          ),
-        ),
-      ),
-    ],
-    actions: (close) => [button('Fechar', close)],
-  });
 }
 
 // Shortcut to the first class of the day whose attendance is still missing.

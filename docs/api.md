@@ -255,6 +255,34 @@ Considera apenas beneficiários ativos, com matrícula ativa, em turmas ativas. 
 ]
 ```
 
+## Visão geral das turmas
+
+`GET /api/v1/program-overview?from=2026-11-01&to=2026-11-16` (até 366 dias, qualquer perfil) resume as turmas que funcionam no período, para a tela inicial. O voluntário vê só as turmas em que é responsável. O app manda o período do primeiro dia do mês até hoje.
+
+```json
+{
+  "from": "2026-11-01",
+  "to": "2026-11-16",
+  "attendanceRate": 82,
+  "activeEnrollments": 40,
+  "leftEnrollments": 2,
+  "activities": [
+    { "activityId": 1, "title": "Capoeira infantil", "status": "ACTIVE", "attendanceRate": 75, "activeEnrollments": 12 }
+  ],
+  "pendingRollCalls": [{ "activityId": 1, "title": "Capoeira infantil", "date": "2026-11-09" }]
+}
+```
+
+| Campo | Regra |
+|---|---|
+| `attendanceRate` | percentual de presenças nos registros de chamada do período, no total e por turma (`null` sem chamadas) |
+| `activeEnrollments` | matrículas ativas de beneficiários ativos em turmas ativas (turma finalizada conta `0`) |
+| `leftEnrollments` | matrículas com saída (`leftAt`) dentro do período |
+| `activities` | turmas que funcionam no período, por título |
+| `pendingRollCalls` | datas de aula pelos horários, dentro do período, sem nenhuma chamada registrada; só turmas ativas com alunos; da mais antiga para a mais recente |
+
+Erros: `400` período invertido ou maior que 366 dias.
+
 ## Banco de dados
 
 As tabelas são criadas pelo Flyway ao subir a API. Sem variáveis definidas, a API usa o banco do `compose.yaml`:

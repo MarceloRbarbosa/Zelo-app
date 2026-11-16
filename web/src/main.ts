@@ -12,6 +12,7 @@ import { renderEvent, renderEventForm, renderEvents } from './views/events.ts';
 import { renderHome } from './views/home.ts';
 import { renderLogin } from './views/login.ts';
 import { renderOrganization } from './views/organization.ts';
+import { renderOverview } from './views/overview.ts';
 import { renderFirstPassword } from './views/password.ts';
 import { renderProfile } from './views/profile.ts';
 import { renderTeam } from './views/team.ts';
@@ -27,7 +28,7 @@ const app: HTMLDivElement = root;
 type View = (main: HTMLElement, params: Record<string, string>) => void | Promise<void>;
 
 const ROUTES: [string, View][] = [
-  ['/', (main) => renderHome(main)],
+  ['/', (main) => renderOverview(main)],
   ['/turmas', (main) => renderActivities(main)],
   ['/turmas/nova', (main) => renderActivityForm(main)],
   ['/turmas/:id', (main, params) => renderActivity(main, Number(params.id))],

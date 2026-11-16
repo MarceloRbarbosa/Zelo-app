@@ -180,6 +180,30 @@ export interface DropoutAlert {
   lastAttendanceDate: string;
 }
 
+export interface ActivityOverview {
+  activityId: number;
+  title: string;
+  status: Activity['status'];
+  attendanceRate: number | null;
+  activeEnrollments: number;
+}
+
+export interface PendingRollCall {
+  activityId: number;
+  title: string;
+  date: string;
+}
+
+export interface ProgramOverview {
+  from: string;
+  to: string;
+  attendanceRate: number | null;
+  activeEnrollments: number;
+  leftEnrollments: number;
+  activities: ActivityOverview[];
+  pendingRollCalls: PendingRollCall[];
+}
+
 export interface ZeloEvent {
   id: number;
   title: string;
@@ -363,6 +387,8 @@ export const api = {
   correctAttendance: (batch: AttendanceBatchRequest) =>
     request<AttendanceBatchResponse>('PUT', '/attendances/batch', batch),
   listAlerts: (activityId?: number) => request<DropoutAlert[]>('GET', `/dropout-alerts${query({ activityId })}`),
+  getProgramOverview: (from: string, to: string) =>
+    request<ProgramOverview>('GET', `/program-overview${query({ from, to })}`),
 
   searchBeneficiaries: (search: BeneficiarySearch = {}) =>
     request<Beneficiary[]>('GET', `/beneficiaries${query({ ...search })}`),

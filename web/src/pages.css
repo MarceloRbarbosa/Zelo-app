@@ -549,7 +549,7 @@
   }
 }
 
-/* Agenda (home) */
+/* Home: dropout risk and the month at a glance */
 .risk-strip {
   display: flex;
   flex-wrap: wrap;
@@ -563,23 +563,6 @@
   background: var(--risk-soft);
 }
 
-.risk-strip__faces {
-  display: flex;
-}
-
-.risk-strip__faces .avatar {
-  width: 30px;
-  height: 30px;
-  margin-left: -8px;
-  border: 2px solid var(--risk-soft);
-  color: var(--risk);
-  background: #fde3c2;
-}
-
-.risk-strip__faces .avatar:first-child {
-  margin-left: 0;
-}
-
 .risk-strip__text {
   flex: 1 1 260px;
   color: var(--muted);
@@ -589,16 +572,115 @@
   color: var(--text);
 }
 
-.dialog-list {
-  display: grid;
-  gap: 8px;
-  max-height: 50vh;
+.risk-strip__names {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  gap: var(--space-1);
   margin: 0;
   padding: 0;
-  overflow-y: auto;
   list-style: none;
 }
 
+.risk-name .avatar {
+  width: 28px;
+  height: 28px;
+  font-size: var(--text-xs);
+  color: var(--risk);
+  background: #fde3c2;
+}
+
+.facts--plain {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stat {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.stat__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.stat__value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.stat__hint {
+  font-size: var(--text-xs);
+  color: var(--subtle);
+}
+
+.section > .stat-grid + .rows,
+.section > .rows + .rows {
+  margin-top: 12px;
+}
+
+/* One hue for every bar: the bar shows how much, the activity name says which. */
+.rate-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: var(--space-2) 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  list-style: none;
+}
+
+.rate-list__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px var(--space-1);
+  align-items: center;
+}
+
+.rate-list__title {
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.rate-list__title:hover {
+  color: var(--accent-text);
+  text-decoration: underline;
+}
+
+.rate-list__value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.rate-list__item .progress-bar {
+  grid-column: 1 / -1;
+}
+
+/* Agenda */
 .agenda-card {
   overflow: hidden;
   border: 1px solid var(--line);
