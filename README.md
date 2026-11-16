@@ -45,4 +45,5 @@ Dados fictícios para demonstração (equipe, oficinas, beneficiários e histór
 ## Documentação
 
 - [API](docs/api.md): endpoints, validações e configuração do banco
-- [CLAUDE.md](CLAUDE.md): arquitetura, modelo de dados e regras do projeto
+- [Requisitos](docs/requisitos.md): funcionalidades, modelo de dados e permissões
+- [CLAUDE.md](CLAUDE.md): arquitetura e regras de desenvolvimento
