@@ -59,6 +59,43 @@
   width: 100%;
 }
 
+.demo-notice {
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid #b9dccb;
+  border-radius: var(--radius-md);
+  color: var(--accent-text);
+  background: var(--accent-soft);
+  text-align: left;
+}
+
+.demo-notice__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-lg);
+}
+
+.demo-notice__accounts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px var(--space-2);
+  margin: 0;
+}
+
+.demo-notice__accounts dt {
+  color: var(--muted);
+}
+
+.demo-notice__accounts dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
 /* Details line under a page title */
 .activity-details {
   display: flex;

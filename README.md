@@ -18,6 +18,18 @@ Projeto piloto com a ONG **Lar de Margarida** (Tamoios, Cabo Frio - RJ).
 - [x] **RF10 — Assistência:** itens como cesta básica, recebimentos, entregas com busca, saldo e quem registrou (área restrita)
 - [x] **RF11 — Início:** risco de evasão, frequência do mês, chamadas pendentes, próximos eventos e assistência
 
+## Demonstração
+
+Ambiente público só com **dados fictícios** (nenhum dado real de criança). A senha de todas as contas é `password`:
+
+| Perfil | E-mail |
+|---|---|
+| Administração | `admin@zelo.com` |
+| Coordenação | `coordenador@zelo.com` |
+| Voluntariado | `voluntario@zelo.com` |
+
+O front publicado com `VITE_DEMO=true` mostra essas contas na tela de login. Se alguém trocar uma senha ou bagunçar os dados, basta esvaziar o banco, reiniciar a API (que recria o admin) e rodar `scripts/seed-demo.sh` de novo.
+
 ## Stack
 
 - **API (`api/`):** Java 25, Spring Boot 4.1, PostgreSQL 16 e Flyway
@@ -47,7 +59,7 @@ npm install
 npm run dev
 ```
 
-Dados fictícios para demonstração (equipe, turmas com matrículas, histórico de chamadas, evento e assistência), com a API rodando e o banco vazio: `ADMIN_EMAIL=... ADMIN_PASSWORD=... scripts/seed-demo.sh` (requer `curl` e `jq`).
+Dados fictícios para demonstração (equipe, turmas com matrículas, histórico de chamadas, evento e assistência), com a API rodando e o banco vazio: `ADMIN_EMAIL=... ADMIN_PASSWORD=... scripts/seed-demo.sh` (requer `curl` e `jq`; `API_URL` aponta para outro endereço e `DEMO_PASSWORD` troca a senha das contas de demonstração).
 
 ## Documentação
 

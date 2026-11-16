@@ -2,22 +2,29 @@
 # Fills a local Zelo API with fictitious demo data: staff, classes with schedules and enrolled students,
 # four weeks of attendance with some absence streaks, an event with registrations and assistance stock,
 # so every screen has something to show. Names and phone numbers are invented.
-# Run it once against an empty database.
+# Run it once against an empty database. The coordinator and volunteer accounts log in directly with
+# DEMO_PASSWORD, without the first-login password change.
 #
-# Usage: ADMIN_EMAIL=... ADMIN_PASSWORD=... scripts/seed-demo.sh
+# Usage: ADMIN_EMAIL=... ADMIN_PASSWORD=... [API_URL=...] [DEMO_PASSWORD=...] scripts/seed-demo.sh
 set -euo pipefail
 
 API="${API_URL:-http://localhost:8080}/api/v1"
 : "${ADMIN_EMAIL:?set ADMIN_EMAIL}"
 : "${ADMIN_PASSWORD:?set ADMIN_PASSWORD}"
-DEMO_PASSWORD="${DEMO_PASSWORD:-demo12345}"
+DEMO_PASSWORD="${DEMO_PASSWORD:-password}"
+# New members start with a provisional password; changing it once to DEMO_PASSWORD clears the mandatory change.
+PROVISIONAL_PASSWORD="provisional-$RANDOM$RANDOM"
 
 call() {
   curl -sf -X "$1" "$API$2" -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" ${3:+-d "$3"}
 }
 
-TOKEN=$(curl -sf -X POST "$API/auth/login" -H 'Content-Type: application/json' \
-  -d "$(jq -n --arg e "$ADMIN_EMAIL" --arg p "$ADMIN_PASSWORD" '{email: $e, password: $p}')" | jq -r .token)
+login() {
+  curl -sf -X POST "$API/auth/login" -H 'Content-Type: application/json' \
+    -d "$(jq -n --arg e "$1" --arg p "$2" '{email: $e, password: $p}')" | jq -r .token
+}
+
+TOKEN=$(login "$ADMIN_EMAIL" "$ADMIN_PASSWORD")
 
 if [ "$(call GET /activities | jq length)" -gt 0 ]; then
   echo "Database already has activities; demo data was not loaded again." >&2
@@ -26,11 +33,14 @@ fi
 
 echo "Staff"
 staff() {
-  call POST /staff-members "$(jq -n --arg n "$1" --arg e "$2" --arg p "$DEMO_PASSWORD" --arg t "$3" --arg r "$4" \
+  call POST /staff-members "$(jq -n --arg n "$1" --arg e "$2" --arg p "$PROVISIONAL_PASSWORD" --arg t "$3" --arg r "$4" \
     '{fullName: $n, email: $e, password: $p, memberType: $t, role: $r}')" | jq .id
+  curl -sf -X PUT "$API/me/password" -H 'Content-Type: application/json' \
+    -H "Authorization: Bearer $(login "$2" "$PROVISIONAL_PASSWORD")" \
+    -d "$(jq -n --arg c "$PROVISIONAL_PASSWORD" --arg n "$DEMO_PASSWORD" '{currentPassword: $c, newPassword: $n}')"
 }
-COORDINATOR=$(staff "Coordenação Demo" coordenacao@zelo.local COORDINATOR ROLE_COORDINATOR)
-VOLUNTEER=$(staff "Voluntário Demo" voluntario@zelo.local VOLUNTEER ROLE_VOLUNTEER)
+COORDINATOR=$(staff "Coordenação Demo" coordenador@zelo.com COORDINATOR ROLE_COORDINATOR)
+VOLUNTEER=$(staff "Voluntário Demo" voluntario@zelo.com VOLUNTEER ROLE_VOLUNTEER)
 
 echo "Beneficiaries"
 declare -a IDS=()
@@ -122,4 +132,4 @@ for id in "${IDS[@]:0:3}"; do
     '{itemId: $i, beneficiaryId: $b, quantity: 1, deliveredAt: $d}')" > /dev/null
 done
 
-echo "Done. Demo logins: coordenacao@zelo.local / voluntario@zelo.local (provisional password: $DEMO_PASSWORD)"
+echo "Done. Demo logins: $ADMIN_EMAIL / coordenador@zelo.com / voluntario@zelo.com (password: $DEMO_PASSWORD)"
