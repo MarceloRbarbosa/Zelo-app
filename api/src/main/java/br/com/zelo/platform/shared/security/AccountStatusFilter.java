@@ -32,11 +32,11 @@ class AccountStatusFilter extends OncePerRequestFilter {
 			AccountState state = checker.stateOf(token.getName());
 			if (state == AccountState.DISABLED) {
 				SecurityContextHolder.clearContext();
-				reject(response, HttpStatus.UNAUTHORIZED, "Account blocked or removed");
+				ProblemResponses.write(response, HttpStatus.UNAUTHORIZED, "Account blocked or removed");
 				return;
 			}
 			if (state == AccountState.PASSWORD_CHANGE_REQUIRED && !isAllowedBeforePasswordChange(request)) {
-				reject(response, HttpStatus.FORBIDDEN, "Password change required");
+				ProblemResponses.write(response, HttpStatus.FORBIDDEN, "Password change required");
 				return;
 			}
 		}
@@ -48,14 +48,6 @@ class AccountStatusFilter extends OncePerRequestFilter {
 		String method = request.getMethod();
 		return (HttpMethod.GET.matches(method) && path.equals("/api/v1/me"))
 				|| (HttpMethod.PUT.matches(method) && path.equals("/api/v1/me/password"));
-	}
-
-	private static void reject(HttpServletResponse response, HttpStatus status, String detail) throws IOException {
-		response.setStatus(status.value());
-		response.setContentType("application/problem+json");
-		response.getWriter()
-			.write("{\"title\":\"" + status.getReasonPhrase() + "\",\"status\":" + status.value() + ",\"detail\":\""
-					+ detail + "\"}");
 	}
 
 }

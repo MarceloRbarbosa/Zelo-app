@@ -50,7 +50,10 @@ public class SecurityConfig {
 				.permitAll()
 				.anyRequest()
 				.authenticated())
-			.oauth2ResourceServer(server -> server
+			.exceptionHandling(errors -> errors.authenticationEntryPoint(ProblemResponses.authenticationEntryPoint())
+				.accessDeniedHandler(ProblemResponses.accessDeniedHandler()))
+			.oauth2ResourceServer(server -> server.authenticationEntryPoint(ProblemResponses.authenticationEntryPoint())
+				.accessDeniedHandler(ProblemResponses.accessDeniedHandler())
 				.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
 			// Not a bean on purpose: as a bean Spring Boot would also register it outside the security chain.
 			.addFilterAfter(new AccountStatusFilter(accountStatusChecker), BearerTokenAuthenticationFilter.class);

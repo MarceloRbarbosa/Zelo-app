@@ -3,6 +3,8 @@ package br.com.zelo.platform.identity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -55,6 +57,31 @@ class AuthApiIT {
 	@Test
 	void requestWithoutTokenIsUnauthorized() throws Exception {
 		mockMvc.perform(get("/api/v1/beneficiaries")).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void securityErrorsAreProblemDetails() throws Exception {
+		String token = login("vol@zelo.org", "secret123");
+
+		mockMvc.perform(get("/api/v1/beneficiaries"))
+			.andExpect(status().isUnauthorized())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+			.andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, "Bearer"))
+			.andExpect(jsonPath("$.status").value(401))
+			.andExpect(jsonPath("$.detail").value("Authentication required"));
+		mockMvc.perform(get("/api/v1/staff-members").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+			.andExpect(status().isForbidden())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+			.andExpect(jsonPath("$.status").value(403))
+			.andExpect(jsonPath("$.detail").value("Access denied for this profile"));
+	}
+
+	// The web app shows a specific message for this 400, instead of the old "could not connect".
+	@Test
+	void emailWithoutDomainIsRejectedAsInvalidField() throws Exception {
+		mockMvc.perform(loginRequest("admin", "secret123"))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.errors.email").exists());
 	}
 
 	@Test
