@@ -103,6 +103,18 @@ class BeneficiaryApiIT {
 	}
 
 	@Test
+	void searchIgnoresAccentsOnBothSides() throws Exception {
+		jdbcTemplate.update("""
+				INSERT INTO beneficiaries (full_name, birth_date, phone_number, status) VALUES
+				('João Pedro Alves', '2012-01-01', '22900000001', 'ACTIVE'),
+				('Jose Maria', '2012-01-01', '22900000002', 'ACTIVE')
+				""");
+
+		mockMvc.perform(get(URL).with(admin()).param("name", "joao")).andExpect(jsonPath("$.length()").value(1));
+		mockMvc.perform(get(URL).with(admin()).param("name", "JOSÉ")).andExpect(jsonPath("$.length()").value(1));
+	}
+
+	@Test
 	void searchTreatsPercentAndUnderscoreLiterally() throws Exception {
 		jdbcTemplate.update("""
 				INSERT INTO beneficiaries (full_name, birth_date, phone_number, status)

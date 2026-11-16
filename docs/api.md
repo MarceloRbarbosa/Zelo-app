@@ -1,6 +1,6 @@
 # API
 
-Base URL local: `http://localhost:8080`. Erros seguem o formato `ProblemDetail` (RFC 9457).
+Base URL local: `http://localhost:8080`. Erros seguem o formato `ProblemDetail` (RFC 9457), inclusive os `401` e `403` de autenticação e permissão.
 
 ## Autenticação
 
@@ -79,7 +79,7 @@ Corpo de `POST` e `PUT`:
 
 Erros: `400` dados inválidos, `404` beneficiário inexistente ou inativo, `409` documento já cadastrado.
 
-Filtros da pesquisa, todos opcionais e combináveis: `name` (parte do nome, sem diferenciar maiúsculas), `documentNumber` (exato), `activityId` (matriculados ativos na turma) e `order` (`ASC` ou `DESC`, padrão `ASC`, pelo nome). Ex.: `GET /api/v1/beneficiaries?name=souza&order=DESC`.
+Filtros da pesquisa, todos opcionais e combináveis: `name` (parte do nome, sem diferenciar maiúsculas nem acentos), `documentNumber` (exato), `activityId` (matriculados ativos na turma) e `order` (`ASC` ou `DESC`, padrão `ASC`, pelo nome). Ex.: `GET /api/v1/beneficiaries?name=souza&order=DESC`.
 
 ## Turmas
 

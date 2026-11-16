@@ -1,5 +1,6 @@
 package br.com.zelo.platform.beneficiary;
 
+import java.text.Normalizer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -30,8 +31,9 @@ public class BeneficiaryService {
 	public List<BeneficiaryResponse> search(BeneficiarySearch search) {
 		Specification<Beneficiary> spec = (root, query, cb) -> cb.equal(root.get("status"), BeneficiaryStatus.ACTIVE);
 		if (search.name() != null && !search.name().isBlank()) {
-			String pattern = "%" + escapeLike(search.name().trim().toLowerCase(Locale.ROOT)) + "%";
-			spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("fullName")), pattern, '\\'));
+			String pattern = "%" + escapeLike(stripAccents(search.name().trim().toLowerCase(Locale.ROOT))) + "%";
+			spec = spec.and((root, query, cb) -> cb.like(
+					cb.function("unaccent", String.class, cb.lower(root.get("fullName"))), pattern, '\\'));
 		}
 		if (search.documentNumber() != null && !search.documentNumber().isBlank()) {
 			spec = spec.and((root, query, cb) -> cb.equal(root.get("documentNumber"), search.documentNumber().trim()));
@@ -94,6 +96,11 @@ public class BeneficiaryService {
 	@Transactional
 	public void deactivate(Long id) {
 		findActive(id).deactivate();
+	}
+
+	// The column goes through the database unaccent; the typed text is stripped the same way here.
+	private static String stripAccents(String value) {
+		return Normalizer.normalize(value, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
 	}
 
 	// The name is matched literally: % and _ typed by the user are not wildcards.
