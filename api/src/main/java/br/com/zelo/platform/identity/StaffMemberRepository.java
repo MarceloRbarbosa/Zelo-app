@@ -22,4 +22,6 @@ public interface StaffMemberRepository extends JpaRepository<StaffMember, Long> 
 
 	List<StaffMember> findAllByOrderByFullNameAsc();
 
+	long countByStatus(StaffStatus status);
+
 }

@@ -70,6 +70,11 @@ public class BeneficiaryService {
 	}
 
 	@Transactional(readOnly = true)
+	public long countActive() {
+		return repository.countByStatus(BeneficiaryStatus.ACTIVE);
+	}
+
+	@Transactional(readOnly = true)
 	public Set<Long> findActiveIds(Collection<Long> ids) {
 		return Set.copyOf(repository.findIdsByIdInAndStatus(ids, BeneficiaryStatus.ACTIVE));
 	}

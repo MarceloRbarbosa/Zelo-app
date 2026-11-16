@@ -283,6 +283,21 @@ Considera apenas beneficiários ativos, com matrícula ativa, em turmas ativas. 
 
 Erros: `400` período invertido ou maior que 366 dias.
 
+## Totais
+
+`GET /api/v1/totals` (qualquer perfil) devolve as contagens atuais da organização, sem baixar as listas. A tela inicial usa esses números para saber se a ONG ainda está começando.
+
+```json
+{ "activeBeneficiaries": 120, "activeActivities": 6, "activeEnrollments": 85, "activeStaff": 9 }
+```
+
+| Campo | Regra |
+|---|---|
+| `activeBeneficiaries` | beneficiários com situação ativa |
+| `activeActivities` | turmas ativas; o voluntário conta só as turmas em que é responsável |
+| `activeEnrollments` | matrículas ativas de beneficiários ativos nessas turmas |
+| `activeStaff` | membros da equipe não bloqueados; `null` para o voluntário, que não vê a equipe |
+
 ## Banco de dados
 
 As tabelas são criadas pelo Flyway ao subir a API. Sem variáveis definidas, a API usa o banco do `compose.yaml`:

@@ -32,14 +32,14 @@ Voluntário. Beneficiários não acessam a plataforma.
   - registro de entregas por beneficiário, sem limite de frequência;
   - registro de recursos recebidos, em área separada, com acesso só de admin e coordenador;
   - busca nas entregas por beneficiário e item; recebimentos e entregas mostram quem registrou (conta logada, sem edição).
-- **RF11 — Início:** tela inicial, aberta também pela logo do menu, com o mês corrente até hoje:
+- **RF11 — Início:** tela inicial, aberta também pela logo do menu, com o mês corrente até hoje. Enquanto a ONG não tem equipe além do admin, beneficiários e alunos matriculados, admin e coordenação veem os **primeiros passos** (cadastrar a equipe, cadastrar beneficiários, criar uma turma e matricular alunos), cada um com o atalho para a tela certa; o voluntário sem turma vê o aviso para falar com a coordenação. Depois disso:
   - aviso de risco de evasão com o nome de cada criança; o nome abre os dados para consulta (turmas, faltas seguidas, última falta e telefone);
   - frequência do mês (presenças sobre o total de registros das chamadas), beneficiários ativos, turmas ativas com alunos cursando e saídas de turma no mês;
   - frequência por turma;
   - chamadas pendentes: aula pelos horários, de turma ativa com alunos, sem chamada registrada;
   - eventos agendados nos próximos 30 dias;
   - só admin e coordenação: entregas do mês por item e itens ativos sem saldo.
-  O voluntário vê os números só das turmas em que é responsável.
+  O voluntário vê os números só das turmas em que é responsável. Número sem medição aparece como `—`, diferente de zero medido; "chamadas em dia" só aparece quando há turma com alunos; as ações de criar turma ou evento só aparecem para quem pode criá-los.
 
 ## Modelo de dados
 - **`staff_members`:** `id`, `full_name` (150, not null), `email` (100, unique, not null), `password_hash` (BCrypt), `member_type` (`VOLUNTEER`/`PROFESSIONAL`/`COORDINATOR`), `role` (`ROLE_ADMIN`/`ROLE_COORDINATOR`/`ROLE_VOLUNTEER`), `status` (`ACTIVE`/`BLOCKED`), `must_change_password`, `failed_login_attempts`, `locked_until`, `created_at`.

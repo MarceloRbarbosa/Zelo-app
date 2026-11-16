@@ -671,6 +671,47 @@
   color: var(--subtle);
 }
 
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px var(--space-2);
+  padding: 14px 18px;
+}
+
+.step + .step {
+  border-top: 1px solid var(--line);
+}
+
+.step__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 50%;
+  color: var(--subtle);
+  background: var(--surface-muted);
+  border: 1px solid var(--line-strong);
+}
+
+.step--done .step__icon {
+  color: var(--present);
+  background: var(--present-soft);
+  border-color: var(--present-line);
+}
+
 .section > .stat-grid + .rows,
 .section > .rows + .rows {
   margin-top: 12px;

@@ -33,6 +33,11 @@ public class StaffMemberService {
 	}
 
 	@Transactional(readOnly = true)
+	public long countActive() {
+		return repository.countByStatus(StaffStatus.ACTIVE);
+	}
+
+	@Transactional(readOnly = true)
 	public List<StaffSummary> findSummaries(Collection<Long> ids) {
 		return repository.findAllById(ids)
 			.stream()

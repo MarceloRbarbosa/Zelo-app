@@ -204,6 +204,14 @@ export interface ProgramOverview {
   pendingRollCalls: PendingRollCall[];
 }
 
+// activeStaff is null for volunteers, who do not see the team.
+export interface Totals {
+  activeBeneficiaries: number;
+  activeActivities: number;
+  activeEnrollments: number;
+  activeStaff: number | null;
+}
+
 export interface ZeloEvent {
   id: number;
   title: string;
@@ -389,6 +397,7 @@ export const api = {
   listAlerts: (activityId?: number) => request<DropoutAlert[]>('GET', `/dropout-alerts${query({ activityId })}`),
   getProgramOverview: (from: string, to: string) =>
     request<ProgramOverview>('GET', `/program-overview${query({ from, to })}`),
+  getTotals: () => request<Totals>('GET', '/totals'),
 
   searchBeneficiaries: (search: BeneficiarySearch = {}) =>
     request<Beneficiary[]>('GET', `/beneficiaries${query({ ...search })}`),

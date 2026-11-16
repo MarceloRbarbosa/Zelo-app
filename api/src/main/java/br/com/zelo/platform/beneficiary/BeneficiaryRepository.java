@@ -22,4 +22,6 @@ public interface BeneficiaryRepository
 	@Query("select b.id from Beneficiary b where b.id in :ids and b.status = :status")
 	List<Long> findIdsByIdInAndStatus(Collection<Long> ids, BeneficiaryStatus status);
 
+	long countByStatus(BeneficiaryStatus status);
+
 }
