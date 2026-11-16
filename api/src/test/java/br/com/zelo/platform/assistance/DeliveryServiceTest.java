@@ -20,6 +20,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import br.com.zelo.platform.beneficiary.BeneficiaryContact;
 import br.com.zelo.platform.beneficiary.BeneficiaryService;
+import br.com.zelo.platform.identity.StaffMemberService;
 import br.com.zelo.platform.shared.exception.NotFoundException;
 import br.com.zelo.platform.shared.security.CurrentStaff;
 
@@ -38,6 +39,9 @@ class DeliveryServiceTest {
 
 	@Mock
 	private BeneficiaryService beneficiaryService;
+
+	@Mock
+	private StaffMemberService staffMemberService;
 
 	@InjectMocks
 	private DeliveryService service;

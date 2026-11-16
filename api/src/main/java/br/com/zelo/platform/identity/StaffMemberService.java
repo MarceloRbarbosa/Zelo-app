@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.zelo.platform.shared.exception.ConflictException;
+import br.com.zelo.platform.shared.exception.ForbiddenException;
 import br.com.zelo.platform.shared.exception.InvalidRequestException;
 import br.com.zelo.platform.shared.exception.NotFoundException;
 
@@ -51,7 +52,8 @@ public class StaffMemberService {
 	}
 
 	@Transactional
-	public StaffMemberResponse create(StaffMemberRequest request) {
+	public StaffMemberResponse create(StaffMemberRequest request, StaffRole requesterRole) {
+		requireManageable(requesterRole, request.role());
 		String email = request.email().toLowerCase(Locale.ROOT);
 		if (repository.existsByEmail(email)) {
 			throw new ConflictException("E-mail already registered");
@@ -62,20 +64,28 @@ public class StaffMemberService {
 	}
 
 	@Transactional
-	public StaffMemberResponse block(Long id, Long currentStaffId) {
+	public StaffMemberResponse block(Long id, Long currentStaffId, StaffRole requesterRole) {
 		if (id.equals(currentStaffId)) {
 			throw new InvalidRequestException("You cannot block your own account");
 		}
 		StaffMember staff = find(id);
+		requireManageable(requesterRole, staff.getRole());
 		staff.block();
 		return StaffMemberResponse.from(staff);
 	}
 
 	@Transactional
-	public StaffMemberResponse unblock(Long id) {
+	public StaffMemberResponse unblock(Long id, StaffRole requesterRole) {
 		StaffMember staff = find(id);
+		requireManageable(requesterRole, staff.getRole());
 		staff.unblock();
 		return StaffMemberResponse.from(staff);
+	}
+
+	private static void requireManageable(StaffRole requesterRole, StaffRole targetRole) {
+		if (!requesterRole.canManage(targetRole)) {
+			throw new ForbiddenException("Your profile cannot manage members with role " + targetRole);
+		}
 	}
 
 	private StaffMember find(Long id) {

@@ -37,10 +37,10 @@ class AttendanceApiIT {
 	void setUp() {
 		jdbcTemplate.execute("TRUNCATE attendances, activities, beneficiaries RESTART IDENTITY CASCADE");
 		jdbcTemplate.update("""
-				INSERT INTO beneficiaries (full_name, birth_date, phone_number, status) VALUES
-				('Ana Souza', '2012-03-10', '22999990000', 'ACTIVE'),
-				('Bruno Reis', '2011-07-21', '22988880000', 'ACTIVE'),
-				('Carla Dias', '2013-01-15', '22977770000', 'INACTIVE')
+				INSERT INTO beneficiaries (full_name, document_number, birth_date, phone_number, status) VALUES
+				('Ana Souza', '22999990000', '2012-03-10', '22999990000', 'ACTIVE'),
+				('Bruno Reis', '22988880000', '2011-07-21', '22988880000', 'ACTIVE'),
+				('Carla Dias', '22977770000', '2013-01-15', '22977770000', 'INACTIVE')
 				""");
 		jdbcTemplate.update("INSERT INTO activities (title, start_date) VALUES ('Reading workshop', '2026-11-02')");
 		jdbcTemplate.update("INSERT INTO enrollments (activity_id, beneficiary_id) VALUES (1, 1), (1, 2), (1, 3)");

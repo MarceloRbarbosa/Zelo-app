@@ -52,9 +52,9 @@ class EventApiIT {
 				VALUES ('Vera', 'vera@zelo.local', 'x', 'VOLUNTEER', 'ROLE_VOLUNTEER')
 				""");
 		jdbcTemplate.update("""
-				INSERT INTO beneficiaries (full_name, birth_date, phone_number, status) VALUES
-				('Bruno', '2012-01-01', '22900000002', 'ACTIVE'),
-				('Ana', '2012-01-01', '22900000001', 'ACTIVE')
+				INSERT INTO beneficiaries (full_name, document_number, birth_date, phone_number, status) VALUES
+				('Bruno', '22900000002', '2012-01-01', '22900000002', 'ACTIVE'),
+				('Ana', '22900000001', '2012-01-01', '22900000001', 'ACTIVE')
 				""");
 	}
 

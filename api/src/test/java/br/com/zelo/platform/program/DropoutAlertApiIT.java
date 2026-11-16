@@ -35,12 +35,12 @@ class DropoutAlertApiIT {
 	void setUp() {
 		jdbcTemplate.execute("TRUNCATE attendances, activities, beneficiaries, staff_members RESTART IDENTITY CASCADE");
 		jdbcTemplate.update("""
-				INSERT INTO beneficiaries (full_name, birth_date, phone_number, status) VALUES
-				('Ana', '2012-01-01', '22900000001', 'ACTIVE'),
-				('Bruno', '2012-01-01', '22900000002', 'ACTIVE'),
-				('Carla', '2012-01-01', '22900000003', 'ACTIVE'),
-				('Davi', '2012-01-01', '22900000004', 'ACTIVE'),
-				('Eva', '2012-01-01', '22900000005', 'INACTIVE')
+				INSERT INTO beneficiaries (full_name, document_number, birth_date, phone_number, status) VALUES
+				('Ana', '22900000001', '2012-01-01', '22900000001', 'ACTIVE'),
+				('Bruno', '22900000002', '2012-01-01', '22900000002', 'ACTIVE'),
+				('Carla', '22900000003', '2012-01-01', '22900000003', 'ACTIVE'),
+				('Davi', '22900000004', '2012-01-01', '22900000004', 'ACTIVE'),
+				('Eva', '22900000005', '2012-01-01', '22900000005', 'INACTIVE')
 				""");
 		jdbcTemplate.update("""
 				INSERT INTO activities (title, start_date, status) VALUES

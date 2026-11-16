@@ -34,13 +34,15 @@ VOLUNTEER=$(staff "Voluntário Demo" voluntario@zelo.local VOLUNTEER ROLE_VOLUNT
 
 echo "Beneficiaries"
 declare -a IDS=()
+# Fictitious CPFs with valid check digits (the API rejects invalid ones).
+CPFS=(52998224725 11144477735 93541134780 01234567890 09876543229 24681357928 13579246828 86420975310 31415926590 27182818205)
 i=0
 for name in "Ana Clara Souza" "Bruno Henrique Lima" "Carla Vitória Dias" "Davi Lucas Rocha" "Eduarda Martins" \
   "Felipe Augusto Reis" "Gabriela Nunes" "Heitor Carvalho" "Isabela Freitas" "João Pedro Alves"; do
   i=$((i + 1))
-  body=$(jq -n --arg n "$name" --arg ph "(22) 90000-00$(printf '%02d' $i)" \
+  body=$(jq -n --arg n "$name" --arg ph "(22) 90000-00$(printf '%02d' $i)" --arg cpf "${CPFS[$((i - 1))]}" \
     --arg bd "201$((i % 5 + 2))-0$((i % 9 + 1))-1$((i % 9))" \
-    '{fullName: $n, birthDate: $bd, phoneNumber: $ph}')
+    '{fullName: $n, documentNumber: $cpf, birthDate: $bd, phoneNumber: $ph}')
   IDS+=("$(call POST /beneficiaries "$body" | jq .id)")
 done
 

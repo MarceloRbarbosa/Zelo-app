@@ -16,8 +16,10 @@ Após 5 senhas erradas seguidas, a conta fica bloqueada por 15 minutos. Toda fal
 
 | Ação | Admin | Coordenador | Voluntário |
 |---|---|---|---|
-| Gerenciar equipe (`/api/v1/staff-members`) | ✅ | ❌ | ❌ |
-| Listar a equipe (para escolher responsáveis) | ✅ | ✅ | ❌ |
+| Listar a equipe | ✅ | ✅ | ❌ |
+| Cadastrar, bloquear e desbloquear membros | ✅ todos (inclusive admin) | só voluntários | ❌ |
+| Organização: remoção de dados (LGPD) | ✅ | ❌ | ❌ |
+| Documentos de beneficiários | ✅ | ✅ | ❌ |
 | Ver e editar o próprio perfil (`/api/v1/me`) | ✅ | ✅ | ✅ |
 | Cadastrar, editar e inativar beneficiários | ✅ | ✅ | ❌ |
 | Criar, editar e finalizar turmas; matricular | ✅ | ✅ | ❌ |
@@ -39,6 +41,8 @@ Após 5 senhas erradas seguidas, a conta fica bloqueada por 15 minutos. Toda fal
 
 Corpo do `POST`: `fullName`, `email` (único), `password` (senha provisória, 8 a 72 caracteres), `memberType` (`VOLUNTEER`, `PROFESSIONAL`, `COORDINATOR`) e `role` (`ROLE_ADMIN`, `ROLE_COORDINATOR`, `ROLE_VOLUNTEER`).
 
+Hierarquia: cada perfil cadastra, bloqueia e desbloqueia só perfis abaixo dele; o admin, no topo, também gerencia outros admins. Fora disso a resposta é `403`. Ninguém bloqueia a própria conta (`400`).
+
 ## Perfil
 
 | Método | Rota | Descrição | Respostas |
@@ -52,10 +56,11 @@ Corpo do `POST`: `fullName`, `email` (único), `password` (senha provisória, 8 
 | Método | Rota | Descrição | Respostas |
 |---|---|---|---|
 | `GET` | `/api/v1/beneficiaries` | Pesquisa os beneficiários ativos | `200`, `400` |
-| `GET` | `/api/v1/beneficiaries/{id}` | Busca um beneficiário ativo | `200`, `404` |
+| `GET` | `/api/v1/beneficiaries/{id}` | Busca um beneficiário ativo ou inativo | `200`, `404` |
 | `POST` | `/api/v1/beneficiaries` | Cadastra um beneficiário | `201`, `400`, `409` |
 | `PUT` | `/api/v1/beneficiaries/{id}` | Atualiza um beneficiário ativo | `200`, `400`, `404`, `409` |
 | `DELETE` | `/api/v1/beneficiaries/{id}` | Inativa o beneficiário (*soft delete*) | `204`, `404` |
+| `POST` | `/api/v1/beneficiaries/{id}/reactivate` | Reativa um beneficiário inativo | `200`, `404` |
 
 Corpo de `POST` e `PUT`:
 
@@ -72,14 +77,31 @@ Corpo de `POST` e `PUT`:
 | Campo | Regra |
 |---|---|
 | `fullName` | obrigatório, até 150 caracteres |
-| `documentNumber` | opcional, 11 dígitos, único |
+| `documentNumber` | obrigatório, CPF com 11 dígitos e dígitos verificadores válidos, único |
 | `birthDate` | obrigatório, data no passado |
 | `phoneNumber` | obrigatório, até 20 caracteres |
 | `address` | opcional, até 255 caracteres |
 
-Erros: `400` dados inválidos, `404` beneficiário inexistente ou inativo, `409` documento já cadastrado.
+Erros: `400` dados inválidos, `404` beneficiário inexistente, `409` CPF já cadastrado. O `409` traz quem já tem o CPF, para o app oferecer a reativação: `{ "beneficiaryId": 7, "fullName": "...", "status": "INACTIVE" }`.
 
-Filtros da pesquisa, todos opcionais e combináveis: `name` (parte do nome, sem diferenciar maiúsculas nem acentos), `documentNumber` (exato), `activityId` (matriculados ativos na turma) e `order` (`ASC` ou `DESC`, padrão `ASC`, pelo nome). Ex.: `GET /api/v1/beneficiaries?name=souza&order=DESC`.
+Filtros da pesquisa, todos opcionais e combináveis: `name` (parte do nome, sem diferenciar maiúsculas nem acentos), `documentNumber` (exato), `activityId` (matriculados ativos na turma), `order` (`ASC` ou `DESC`, padrão `ASC`, pelo nome) e `status` (`ACTIVE`, `INACTIVE` ou `ALL`, padrão `ACTIVE`). Beneficiários anonimizados nunca aparecem. Ex.: `GET /api/v1/beneficiaries?name=souza&order=DESC`.
+
+### Documentos do beneficiário
+
+Admin e coordenador. Arquivos PDF, JPG ou PNG de até 5 MB; o tipo é conferido pelo conteúdo do arquivo.
+
+| Método | Rota | Descrição | Respostas |
+|---|---|---|---|
+| `GET` | `/api/v1/beneficiaries/{id}/documents` | Lista os documentos, mais recentes primeiro | `200`, `404` |
+| `POST` | `/api/v1/beneficiaries/{id}/documents` | Anexa (`multipart/form-data` com `title` e `file`) | `201`, `400`, `404`, `413` |
+| `GET` | `/api/v1/beneficiaries/{id}/documents/{docId}/content` | Baixa o arquivo | `200`, `404` |
+| `DELETE` | `/api/v1/beneficiaries/{id}/documents/{docId}` | Exclui | `204`, `404` |
+
+Os arquivos ficam no diretório `DOCUMENTS_DIR` (padrão `./data/documents`).
+
+## Organização
+
+Só admin. `POST /api/v1/organization/beneficiaries/{id}/data-removal` com `{ "note": "quem pediu e como" }` remove os dados pessoais **a pedido do beneficiário ou responsável** (LGPD): nome, CPF, nascimento, telefone, endereço e documentos são apagados; chamadas e entregas continuam contadas, sem identificar a pessoa. Responde `201` com o registro da remoção (data, quem fez e a nota). `GET /api/v1/organization/data-removals` lista o histórico.
 
 ## Turmas
 
@@ -208,10 +230,10 @@ Resposta: `beneficiaryId`, `fullName`, `registeredAt` e `attended`. Evento cance
 | `PUT` | `/api/v1/assistance/items/{id}` | Edita ou inativa um item | `200`, `400`, `404`, `409` |
 | `GET` | `/api/v1/assistance/receipts?from=2026-11-01&to=2026-11-30` | Recursos recebidos no período (até 366 dias), mais recentes primeiro | `200`, `400` |
 | `POST` | `/api/v1/assistance/receipts` | Registra um recebimento | `201`, `400`, `404`, `409` |
-| `GET` | `/api/v1/assistance/deliveries?from=...&to=...` ou `?beneficiaryId=7` | Entregas do período ou histórico do beneficiário | `200`, `400` |
+| `GET` | `/api/v1/assistance/deliveries?from=...&to=...` ou `?beneficiaryId=7` | Entregas do período (filtros opcionais `beneficiaryName` e `itemId`) ou histórico do beneficiário | `200`, `400` |
 | `POST` | `/api/v1/assistance/deliveries` | Registra uma entrega a um beneficiário ativo | `201`, `400`, `404`, `409` |
 
-Recebimento: `itemId`, `quantity` (maior que zero), `receivedAt` (até hoje), `donor` (até 150) e `notes` (até 255). Entrega: `itemId`, `beneficiaryId`, `quantity`, `deliveredAt` e `notes`. Quem registrou fica gravado. Nome de item é único sem diferenciar maiúsculas (`409`); item inativo não recebe movimentos (`409`). Não há limite de frequência nem bloqueio por saldo: o saldo é informativo.
+Recebimento: `itemId`, `quantity` (maior que zero), `receivedAt` (até hoje), `donor` (até 150) e `notes` (até 255). Entrega: `itemId`, `beneficiaryId`, `quantity`, `deliveredAt` e `notes`. Quem registrou vem da conta logada, não é editável e aparece em `recordedBy` nos recebimentos e nas entregas. Nome de item é único sem diferenciar maiúsculas (`409`); item inativo não recebe movimentos (`409`). Não há limite de frequência nem bloqueio por saldo: o saldo é informativo.
 
 ## Alertas de evasão
 

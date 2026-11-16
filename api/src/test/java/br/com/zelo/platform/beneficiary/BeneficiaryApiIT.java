@@ -43,7 +43,7 @@ class BeneficiaryApiIT {
 
 	@Test
 	void createPersistsBeneficiary() throws Exception {
-		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body("12345678901")))
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body("52998224725")))
 			.andExpect(status().isCreated())
 			.andExpect(header().string("Location", URL + "/1"))
 			.andExpect(jsonPath("$.status").value("ACTIVE"));
@@ -53,25 +53,46 @@ class BeneficiaryApiIT {
 	}
 
 	@Test
-	void createWithDuplicateDocumentReturnsConflict() throws Exception {
-		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body("12345678901")))
+	void createWithDuplicateCpfReturnsConflictWithTheExistingRecord() throws Exception {
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body("52998224725")))
 			.andExpect(status().isCreated());
+		mockMvc.perform(delete(URL + "/1").with(admin())).andExpect(status().isNoContent());
 
-		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body("12345678901")))
-			.andExpect(status().isConflict());
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body("52998224725")))
+			.andExpect(status().isConflict())
+			.andExpect(jsonPath("$.beneficiaryId").value(1))
+			.andExpect(jsonPath("$.fullName").value("Ana Souza"))
+			.andExpect(jsonPath("$.status").value("INACTIVE"));
+
+		mockMvc.perform(post(URL + "/1/reactivate").with(admin()))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("ACTIVE"));
 	}
 
 	@Test
-	void deleteKeepsRowAsInactiveAndHidesIt() throws Exception {
+	void cpfIsRequiredAndMustBeValid() throws Exception {
 		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body(null)))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.errors.documentNumber").exists());
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body("52998224724")))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.errors.documentNumber").value("must be a valid CPF"));
+	}
+
+	@Test
+	void deleteKeepsRowAsInactiveAndListsItOnlyWhenAsked() throws Exception {
+		mockMvc.perform(post(URL).with(admin()).contentType(MediaType.APPLICATION_JSON).content(body("52998224725")))
 			.andExpect(status().isCreated());
 
 		mockMvc.perform(delete(URL + "/1").with(admin())).andExpect(status().isNoContent());
 
 		assertThat(jdbcTemplate.queryForObject("SELECT status FROM beneficiaries WHERE id = 1", String.class))
 			.isEqualTo("INACTIVE");
-		mockMvc.perform(get(URL + "/1").with(admin())).andExpect(status().isNotFound());
+		mockMvc.perform(get(URL + "/1").with(admin())).andExpect(jsonPath("$.status").value("INACTIVE"));
 		mockMvc.perform(get(URL).with(admin())).andExpect(jsonPath("$.length()").value(0));
+		mockMvc.perform(get(URL).with(admin()).param("status", "ALL")).andExpect(jsonPath("$.length()").value(1));
+		mockMvc.perform(get(URL).with(admin()).param("status", "INACTIVE"))
+			.andExpect(jsonPath("$[0].status").value("INACTIVE"));
 	}
 
 	@Test
@@ -79,9 +100,9 @@ class BeneficiaryApiIT {
 		jdbcTemplate.update("""
 				INSERT INTO beneficiaries (full_name, document_number, birth_date, phone_number, status) VALUES
 				('Ana Souza', '11111111111', '2012-01-01', '22900000001', 'ACTIVE'),
-				('Bruno Souza', NULL, '2012-01-01', '22900000002', 'ACTIVE'),
-				('Carla Dias', NULL, '2012-01-01', '22900000003', 'ACTIVE'),
-				('Davi Souza', NULL, '2012-01-01', '22900000004', 'INACTIVE')
+				('Bruno Souza', '22222222222', '2012-01-01', '22900000002', 'ACTIVE'),
+				('Carla Dias', '33333333333', '2012-01-01', '22900000003', 'ACTIVE'),
+				('Davi Souza', '44444444444', '2012-01-01', '22900000004', 'INACTIVE')
 				""");
 		jdbcTemplate.update("INSERT INTO activities (title, start_date) VALUES ('Capoeira', '2026-11-02')");
 		jdbcTemplate.update("""
@@ -105,9 +126,9 @@ class BeneficiaryApiIT {
 	@Test
 	void searchIgnoresAccentsOnBothSides() throws Exception {
 		jdbcTemplate.update("""
-				INSERT INTO beneficiaries (full_name, birth_date, phone_number, status) VALUES
-				('João Pedro Alves', '2012-01-01', '22900000001', 'ACTIVE'),
-				('Jose Maria', '2012-01-01', '22900000002', 'ACTIVE')
+				INSERT INTO beneficiaries (full_name, document_number, birth_date, phone_number, status) VALUES
+				('João Pedro Alves', '22900000001', '2012-01-01', '22900000001', 'ACTIVE'),
+				('Jose Maria', '22900000002', '2012-01-01', '22900000002', 'ACTIVE')
 				""");
 
 		mockMvc.perform(get(URL).with(admin()).param("name", "joao")).andExpect(jsonPath("$.length()").value(1));
@@ -117,8 +138,8 @@ class BeneficiaryApiIT {
 	@Test
 	void searchTreatsPercentAndUnderscoreLiterally() throws Exception {
 		jdbcTemplate.update("""
-				INSERT INTO beneficiaries (full_name, birth_date, phone_number, status)
-				VALUES ('Ana Souza', '2012-01-01', '22900000001', 'ACTIVE')
+				INSERT INTO beneficiaries (full_name, document_number, birth_date, phone_number, status)
+				VALUES ('Ana Souza', '22900000001', '2012-01-01', '22900000001', 'ACTIVE')
 				""");
 
 		mockMvc.perform(get(URL).with(admin()).param("name", "%")).andExpect(jsonPath("$.length()").value(0));

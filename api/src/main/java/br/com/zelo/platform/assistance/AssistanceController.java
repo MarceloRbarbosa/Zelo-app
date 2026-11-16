@@ -74,7 +74,8 @@ public class AssistanceController {
 	@GetMapping("/deliveries")
 	public List<DeliveryResponse> listDeliveries(@RequestParam(required = false) Long beneficiaryId,
 			@RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
-			@RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
+			@RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to,
+			@RequestParam(required = false) Long itemId, @RequestParam(required = false) String beneficiaryName) {
 		if (beneficiaryId != null) {
 			return deliveryService.listByBeneficiary(beneficiaryId);
 		}
@@ -82,7 +83,7 @@ public class AssistanceController {
 			throw new InvalidRequestException(
 					"Give beneficiaryId or both from and to");
 		}
-		return deliveryService.listByPeriod(from, to);
+		return deliveryService.listByPeriod(from, to, itemId, beneficiaryName);
 	}
 
 	@PostMapping("/deliveries")

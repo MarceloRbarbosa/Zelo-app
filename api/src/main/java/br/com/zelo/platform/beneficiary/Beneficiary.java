@@ -27,10 +27,10 @@ public class Beneficiary {
 	@Column(name = "document_number", unique = true, length = 11)
 	private String documentNumber;
 
-	@Column(name = "birth_date", nullable = false)
+	@Column(name = "birth_date")
 	private LocalDate birthDate;
 
-	@Column(name = "phone_number", nullable = false, length = 20)
+	@Column(name = "phone_number", length = 20)
 	private String phoneNumber;
 
 	@Column(name = "address")
@@ -71,6 +71,20 @@ public class Beneficiary {
 
 	public void deactivate() {
 		this.status = BeneficiaryStatus.INACTIVE;
+	}
+
+	public void reactivate() {
+		this.status = BeneficiaryStatus.ACTIVE;
+	}
+
+	// Removes every personal field; the row stays so attendance and deliveries keep their links.
+	public void anonymize() {
+		this.fullName = "Dados removidos (LGPD)";
+		this.documentNumber = null;
+		this.birthDate = null;
+		this.phoneNumber = null;
+		this.address = null;
+		this.status = BeneficiaryStatus.ANONYMIZED;
 	}
 
 	public Long getId() {

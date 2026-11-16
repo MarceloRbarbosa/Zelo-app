@@ -32,8 +32,9 @@ public class BeneficiaryController {
 	@GetMapping
 	public List<BeneficiaryResponse> search(@RequestParam(required = false) String name,
 			@RequestParam(required = false) String documentNumber, @RequestParam(required = false) Long activityId,
-			@RequestParam(defaultValue = "ASC") Sort.Direction order) {
-		return service.search(new BeneficiarySearch(name, documentNumber, activityId, order));
+			@RequestParam(defaultValue = "ASC") Sort.Direction order,
+			@RequestParam(defaultValue = "ACTIVE") BeneficiarySearch.Status status) {
+		return service.search(new BeneficiarySearch(name, documentNumber, activityId, order, status));
 	}
 
 	@PreAuthorize("hasAnyRole('ADMIN', 'COORDINATOR', 'VOLUNTEER')")
@@ -53,6 +54,12 @@ public class BeneficiaryController {
 	@PutMapping("/{id}")
 	public BeneficiaryResponse update(@PathVariable Long id, @Valid @RequestBody BeneficiaryRequest request) {
 		return service.update(id, request);
+	}
+
+	@PreAuthorize("hasAnyRole('ADMIN', 'COORDINATOR')")
+	@PostMapping("/{id}/reactivate")
+	public BeneficiaryResponse reactivate(@PathVariable Long id) {
+		return service.reactivate(id);
 	}
 
 	@PreAuthorize("hasAnyRole('ADMIN', 'COORDINATOR')")

@@ -77,11 +77,25 @@ class StaffMemberApiIT {
 	}
 
 	@Test
-	void coordinatorListsTeamButCannotCreateMembers() throws Exception {
+	void coordinatorManagesOnlyVolunteers() throws Exception {
 		mockMvc.perform(get(URL).with(coordinator())).andExpect(status().isOk());
 		mockMvc.perform(post(URL).with(coordinator()).contentType(MediaType.APPLICATION_JSON).content(BODY))
+			.andExpect(status().isCreated());
+		mockMvc.perform(post(URL).with(coordinator())
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(BODY.replace("bia@", "caio@").replace("ROLE_VOLUNTEER", "ROLE_COORDINATOR")))
 			.andExpect(status().isForbidden());
+		mockMvc.perform(post(URL + "/1/block").with(coordinator(99))).andExpect(status().isOk());
+	}
+
+	@Test
+	void adminCreatesAdminsAndVolunteersCannotManageAnyone() throws Exception {
+		mockMvc.perform(post(URL).with(admin())
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(BODY.replace("ROLE_VOLUNTEER", "ROLE_ADMIN")))
+			.andExpect(status().isCreated());
 		mockMvc.perform(get(URL).with(volunteer())).andExpect(status().isForbidden());
+		mockMvc.perform(post(URL + "/1/block").with(coordinator(99))).andExpect(status().isForbidden());
 	}
 
 }

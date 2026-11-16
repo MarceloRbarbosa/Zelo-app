@@ -43,8 +43,8 @@ class AssistanceApiIT {
 				VALUES ('Clara', 'clara@zelo.local', 'x', 'COORDINATOR', 'ROLE_COORDINATOR')
 				""");
 		jdbcTemplate.update("""
-				INSERT INTO beneficiaries (full_name, birth_date, phone_number, status)
-				VALUES ('Ana', '2012-01-01', '22900000001', 'ACTIVE')
+				INSERT INTO beneficiaries (full_name, document_number, birth_date, phone_number, status)
+				VALUES ('Ana', '22900000001', '2012-01-01', '22900000001', 'ACTIVE')
 				""");
 	}
 
@@ -69,6 +69,35 @@ class AssistanceApiIT {
 			.andExpect(jsonPath("$[0].donor").value("Mercado Tamoios"));
 		assertThat(jdbcTemplate.queryForObject("SELECT recorded_by FROM assistance_deliveries", Long.class))
 			.isEqualTo(1L);
+		mockMvc.perform(get(URL + "/receipts").with(coordinator(1)).param("from", "2026-11-01").param("to",
+				"2026-11-30"))
+			.andExpect(jsonPath("$[0].recordedBy").value("Clara"));
+	}
+
+	@Test
+	void deliveriesCanBeSearchedByBeneficiaryNameAndItem() throws Exception {
+		post("/items", "{\"name\": \"Cesta básica\"}");
+		post("/items", "{\"name\": \"Kit de higiene\"}");
+		post("/deliveries", """
+				{"itemId": 1, "beneficiaryId": 1, "quantity": 1, "deliveredAt": "2026-11-12"}
+				""");
+		post("/deliveries", """
+				{"itemId": 2, "beneficiaryId": 1, "quantity": 1, "deliveredAt": "2026-11-13"}
+				""");
+
+		mockMvc.perform(get(URL + "/deliveries").with(coordinator(1))
+			.param("from", "2026-11-01")
+			.param("to", "2026-11-30")
+			.param("beneficiaryName", "ANA")
+			.param("itemId", "2"))
+			.andExpect(jsonPath("$.length()").value(1))
+			.andExpect(jsonPath("$[0].itemName").value("Kit de higiene"))
+			.andExpect(jsonPath("$[0].recordedBy").value("Clara"));
+		mockMvc.perform(get(URL + "/deliveries").with(coordinator(1))
+			.param("from", "2026-11-01")
+			.param("to", "2026-11-30")
+			.param("beneficiaryName", "bruno"))
+			.andExpect(jsonPath("$.length()").value(0));
 	}
 
 	@Test

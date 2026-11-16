@@ -13,9 +13,9 @@ public interface BeneficiaryRepository
 
 	Optional<Beneficiary> findByIdAndStatus(Long id, BeneficiaryStatus status);
 
-	boolean existsByDocumentNumber(String documentNumber);
+	Optional<Beneficiary> findByIdAndStatusIn(Long id, Collection<BeneficiaryStatus> statuses);
 
-	boolean existsByDocumentNumberAndIdNot(String documentNumber, Long id);
+	Optional<Beneficiary> findByDocumentNumber(String documentNumber);
 
 	List<Beneficiary> findAllByIdInAndStatus(Collection<Long> ids, BeneficiaryStatus status);
 

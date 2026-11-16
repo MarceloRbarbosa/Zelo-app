@@ -4,6 +4,7 @@ import java.text.Normalizer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.data.domain.Sort;
@@ -17,19 +18,30 @@ import br.com.zelo.platform.shared.exception.NotFoundException;
 @Service
 public class BeneficiaryService {
 
+	private static final List<BeneficiaryStatus> VISIBLE = List.of(BeneficiaryStatus.ACTIVE, BeneficiaryStatus.INACTIVE);
+
 	private final BeneficiaryRepository repository;
 
 	private final EnrollmentLookup enrollmentLookup;
 
-	public BeneficiaryService(BeneficiaryRepository repository, EnrollmentLookup enrollmentLookup) {
+	private final BeneficiaryDocumentService documentService;
+
+	public BeneficiaryService(BeneficiaryRepository repository, EnrollmentLookup enrollmentLookup,
+			BeneficiaryDocumentService documentService) {
 		this.repository = repository;
 		this.enrollmentLookup = enrollmentLookup;
+		this.documentService = documentService;
 	}
 
 	// Every filter is optional; by activity means beneficiaries currently enrolled in it.
 	@Transactional(readOnly = true)
 	public List<BeneficiaryResponse> search(BeneficiarySearch search) {
-		Specification<Beneficiary> spec = (root, query, cb) -> cb.equal(root.get("status"), BeneficiaryStatus.ACTIVE);
+		List<BeneficiaryStatus> statuses = switch (search.status()) {
+			case ACTIVE -> List.of(BeneficiaryStatus.ACTIVE);
+			case INACTIVE -> List.of(BeneficiaryStatus.INACTIVE);
+			case ALL -> VISIBLE;
+		};
+		Specification<Beneficiary> spec = (root, query, cb) -> root.get("status").in(statuses);
 		if (search.name() != null && !search.name().isBlank()) {
 			String pattern = "%" + escapeLike(stripAccents(search.name().trim().toLowerCase(Locale.ROOT))) + "%";
 			spec = spec.and((root, query, cb) -> cb.like(
@@ -51,9 +63,10 @@ public class BeneficiaryService {
 			.toList();
 	}
 
+	// Inactive beneficiaries can still be opened, to be reactivated.
 	@Transactional(readOnly = true)
 	public BeneficiaryResponse findById(Long id) {
-		return BeneficiaryResponse.from(findActive(id));
+		return BeneficiaryResponse.from(findVisible(id));
 	}
 
 	@Transactional(readOnly = true)
@@ -73,9 +86,7 @@ public class BeneficiaryService {
 	@Transactional
 	public BeneficiaryResponse create(BeneficiaryRequest request) {
 		String documentNumber = request.documentNumber();
-		if (documentNumber != null && repository.existsByDocumentNumber(documentNumber)) {
-			throw new ConflictException("Document number already registered");
-		}
+		repository.findByDocumentNumber(documentNumber).ifPresent(BeneficiaryService::rejectDuplicate);
 		Beneficiary beneficiary = new Beneficiary(request.fullName(), documentNumber, request.birthDate(),
 				request.phoneNumber(), request.address());
 		return BeneficiaryResponse.from(repository.save(beneficiary));
@@ -85,9 +96,9 @@ public class BeneficiaryService {
 	public BeneficiaryResponse update(Long id, BeneficiaryRequest request) {
 		Beneficiary beneficiary = findActive(id);
 		String documentNumber = request.documentNumber();
-		if (documentNumber != null && repository.existsByDocumentNumberAndIdNot(documentNumber, id)) {
-			throw new ConflictException("Document number already registered");
-		}
+		repository.findByDocumentNumber(documentNumber)
+			.filter(existing -> !existing.getId().equals(id))
+			.ifPresent(BeneficiaryService::rejectDuplicate);
 		beneficiary.update(request.fullName(), documentNumber, request.birthDate(), request.phoneNumber(),
 				request.address());
 		return BeneficiaryResponse.from(beneficiary);
@@ -96,6 +107,31 @@ public class BeneficiaryService {
 	@Transactional
 	public void deactivate(Long id) {
 		findActive(id).deactivate();
+	}
+
+	@Transactional
+	public BeneficiaryResponse reactivate(Long id) {
+		Beneficiary beneficiary = findVisible(id);
+		beneficiary.reactivate();
+		return BeneficiaryResponse.from(beneficiary);
+	}
+
+	// Only on the beneficiary's (or guardian's) request; see the organization module.
+	@Transactional
+	public void anonymize(Long id) {
+		findVisible(id).anonymize();
+		documentService.removeAll(id);
+	}
+
+	// One CPF, one record: the client gets who already has it, so it can offer to reactivate.
+	private static void rejectDuplicate(Beneficiary existing) {
+		throw new ConflictException("Document number already registered", Map.of("beneficiaryId", existing.getId(),
+				"fullName", existing.getFullName(), "status", existing.getStatus().name()));
+	}
+
+	private Beneficiary findVisible(Long id) {
+		return repository.findByIdAndStatusIn(id, VISIBLE)
+			.orElseThrow(() -> new NotFoundException("Beneficiary " + id + " not found"));
 	}
 
 	// The column goes through the database unaccent; the typed text is stripped the same way here.
