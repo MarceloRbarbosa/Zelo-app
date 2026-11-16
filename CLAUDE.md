@@ -23,6 +23,7 @@ celulares intermediários com rede 4G/Wi-Fi instável.
 - `program/` — turmas, horários, responsáveis, matrículas, diário de classe e alertas de evasão.
 - `event/` — eventos, responsáveis, inscrição e presença.
 - `assistance/` — itens de assistência, entregas a beneficiários e recebimentos.
+- `organization/` — gerenciamento reservado ao admin (remoção de dados pessoais a pedido, LGPD).
 
 Tela que só combina dados de outros módulos (ex.: calendário) não vira módulo.
 
@@ -50,8 +51,9 @@ Tela que só combina dados de outros módulos (ex.: calendário) não vira módu
 
 **Front-end e acessibilidade (WCAG 2.1 AA)**
 - Design system próprio em `web/src/design-system/`: tokens em CSS (cor, tipografia, espaçamento), componentes reutilizáveis e ícones SVG próprios. Sem biblioteca de UI.
-- Visual de plataforma: base neutra com uma cor de destaque (provisória `#4f46e5`, a definir com a ONG); cor só com significado, sempre com ícone e texto. Sem fotos de crianças.
-- Fonte Inter (licença OFL) servida de `web/src/design-system/fonts/`: única exceção à regra de não adicionar dependência.
+- Visual de ONG: verde-floresta para estrutura e ações, girassol para destaques, base neutra; uma cor por turma na agenda; cor só com significado, sempre com ícone e texto. Sem fotos de crianças.
+- Confirmações e avisos usam o modal do design system (`openDialog`/`confirmDialog`), nunca `alert`/`confirm` do navegador.
+- Fonte Figtree (licença OFL) servida de `web/src/design-system/fonts/`: única exceção à regra de não adicionar dependência.
 - Mobile-first (360px); alvos de toque ≥ 48×48px com espaçamento ≥ 8px.
 - Alertas multimodais: cor + ícone/borda + texto (`Presente`, `Ausente`, `Risco de Evasão`).
 - Interfaces TypeScript espelham os DTOs do back-end.

@@ -8,10 +8,10 @@ Quem acessa a plataforma é só a equipe, com **um perfil por pessoa**: Admin, C
 Voluntário. Beneficiários não acessam a plataforma.
 
 ## Requisitos funcionais
-- **RF01 — Beneficiários:** cadastro com campos obrigatórios, documento único e exclusão lógica.
+- **RF01 — Beneficiários:** cadastro com CPF obrigatório, válido e único; inativação lógica (o cadastro continua na lista com a situação "Inativo" e pode ser reativado); CPF repetido mostra quem já o tem e oferece reativar; remoção de dados pessoais só a pedido (LGPD), feita pelo admin em Organização; anexos de documentos (PDF, JPG ou PNG, até 5 MB) visíveis a admin e coordenação.
 - **RF02 — Chamada:** lançamento em lote da chamada do dia de uma turma, só para alunos com matrícula ativa.
 - **RF03 — Alerta de evasão:** beneficiário com **3 ou mais faltas consecutivas** (sequência atual, após a última presença) na mesma turma, com telefone para busca ativa.
-- **RF04 — Equipe e acesso:** admin cadastra membros com senha provisória; troca obrigatória no primeiro login; página de perfil com edição; admin bloqueia membros com efeito imediato.
+- **RF04 — Equipe e acesso:** cadastro com senha provisória; troca obrigatória no primeiro login; página de perfil com edição; bloqueio com efeito imediato. Hierarquia: cada perfil gerencia só perfis abaixo dele (coordenação gerencia voluntários); o admin, no topo, gerencia todos, inclusive admins.
 - **RF05 — Pesquisa de beneficiários:** por nome, documento e turma, em ordem alfabética crescente ou decrescente.
 - **RF06 — Turmas:**
   - criar com título, descrição, data de início, horários (dias da semana e hora) e responsáveis (um ou mais); ao criar, abre o diário da turma;
@@ -26,15 +26,18 @@ Voluntário. Beneficiários não acessam a plataforma.
   - observação por aluno em cada aula;
   - versão para impressão.
 - **RF08 — Eventos:** responsáveis definidos na criação; inscrição de beneficiários; registro de quem compareceu. Evento não tem chamada.
-- **RF09 — Calendário:** aulas (geradas pelos horários das turmas) e eventos.
+- **RF09 — Agenda:** tela inicial com a agenda da ONG em visão mensal ou semanal (aulas geradas pelos horários, uma cor por turma, e eventos), com o aviso de risco de evasão acima.
 - **RF10 — Assistência:**
   - catálogo de itens a distribuir (a cesta básica é um exemplo);
   - registro de entregas por beneficiário, sem limite de frequência;
-  - registro de recursos recebidos, em área separada, com acesso só de admin e coordenador.
+  - registro de recursos recebidos, em área separada, com acesso só de admin e coordenador;
+  - busca nas entregas por beneficiário e item; recebimentos e entregas mostram quem registrou (conta logada, sem edição).
 
 ## Modelo de dados
 - **`staff_members`:** `id`, `full_name` (150, not null), `email` (100, unique, not null), `password_hash` (BCrypt), `member_type` (`VOLUNTEER`/`PROFESSIONAL`/`COORDINATOR`), `role` (`ROLE_ADMIN`/`ROLE_COORDINATOR`/`ROLE_VOLUNTEER`), `status` (`ACTIVE`/`BLOCKED`), `must_change_password`, `failed_login_attempts`, `locked_until`, `created_at`.
-- **`beneficiaries`:** `id`, `full_name` (150, not null), `document_number` (11, unique quando preenchido), `birth_date` (not null), `phone_number` (20, not null), `address` (255), `status` (`ACTIVE`/`INACTIVE`, soft delete), `created_at`.
+- **`beneficiaries`:** `id`, `full_name` (150, not null), `document_number` (CPF, 11, unique), `birth_date`, `phone_number` (20), `address` (255), `status` (`ACTIVE`/`INACTIVE`/`ANONYMIZED`), `created_at`. CPF, nascimento e telefone são obrigatórios, exceto quando anonimizado.
+- **`beneficiary_documents`:** `id`, `beneficiary_id` (FK), `title`, `file_name`, `content_type`, `size_bytes`, `storage_key`, `uploaded_at`, `uploaded_by` (FK staff).
+- **`data_removals`:** `id`, `beneficiary_id` (FK), `removed_at`, `removed_by` (FK staff), `note` — prova de que o pedido de remoção foi atendido, sem dados pessoais.
 - **`activities`:** `id`, `title` (100, not null), `description` (255), `status` (`ACTIVE`/`FINISHED`), `start_date` (not null), `end_date` (preenchida ao finalizar).
 - **`activity_schedules`:** `activity_id` (FK), `day_of_week`, `start_time`, `end_time`.
 - **`activity_staff`:** `activity_id` (FK), `staff_id` (FK).
@@ -50,7 +53,9 @@ Voluntário. Beneficiários não acessam a plataforma.
 ## Matriz de permissões
 | Ação | Admin | Coordenador | Voluntário responsável | Outro voluntário |
 |---|---|---|---|---|
-| Cadastrar e bloquear equipe | ✅ | ❌ | ❌ | ❌ |
+| Cadastrar e bloquear equipe | ✅ todos | só voluntários | ❌ | ❌ |
+| Remover dados pessoais a pedido (LGPD) | ✅ | ❌ | ❌ | ❌ |
+| Anexar e ver documentos de beneficiários | ✅ | ✅ | ❌ | ❌ |
 | Cadastrar e editar beneficiário | ✅ | ✅ | ❌ | ❌ |
 | Pesquisar e ver beneficiários | ✅ | ✅ | ✅ | ✅ |
 | Criar, editar e finalizar turma; definir responsáveis | ✅ | ✅ | ❌ | ❌ |
