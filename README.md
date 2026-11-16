@@ -20,7 +20,7 @@ Projeto piloto com a ONG **Lar de Margarida** (Tamoios, Cabo Frio - RJ).
 
 ## Demonstração
 
-Ambiente público só com **dados fictícios** (nenhum dado real de criança). A senha de todas as contas é `password`:
+Acesse **https://zelo-app-silk.vercel.app**. É um ambiente público só com **dados fictícios** (nenhum dado real de criança). A senha de todas as contas é `password`:
 
 | Perfil | E-mail |
 |---|---|
