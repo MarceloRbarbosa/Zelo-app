@@ -1,31 +1,45 @@
-/* Zelo design tokens.
-   Brand colors come from the Lar de Margarida palette (ong-lar-de-margarida-front/assets/css/variables.css):
-   sunflower yellow and bark brown. Every text/background pair below keeps a contrast of at least 4.5:1. */
+/* Zelo design tokens: neutral platform look with a single accent color.
+   Color carries meaning only (accent for actions, green/red/amber for status), always paired with icon and text.
+   Every text/background pair keeps a contrast of at least 4.5:1. */
+@font-face {
+  font-family: Inter;
+  src: url('./fonts/inter-latin-wght-normal.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root {
   /* Color */
-  --sunflower: #fad25a; /* brand; only behind bark text (8.6:1) */
-  --sunflower-soft: #fdf0c4;
-  --bark: #502d07; /* text and navigation */
-  --bark-soft: #6e4a22;
-  --sage: #eef0ea; /* page background */
-  --paper: #ffffff; /* surfaces */
-  --line: #cfd2c8;
-  --ink-muted: #565a4f; /* secondary text, 6.9:1 on paper */
-  --present: #1e6b34;
-  --present-soft: #e6f2e9;
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-muted: #f9fafb;
+  --line: #e4e7ec;
+  --line-strong: #d0d5dd;
+  --text: #101828;
+  --muted: #475467;
+  --subtle: #667085;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-soft: #eef2ff;
+  --accent-text: #3730a3;
+  --present: #067647;
+  --present-soft: #ecfdf3;
+  --present-line: #abefc6;
   --absent: #b42318;
-  --absent-soft: #fbe9e7;
-  --risk: #8a3b00; /* dropout risk: dark amber, paired with an icon and the text "Risco de evasão" */
-  --risk-soft: #fff1e0;
+  --absent-soft: #fef3f2;
+  --absent-line: #fecdca;
+  --risk: #b54708;
+  --risk-soft: #fffaeb;
+  --risk-line: #fedf89;
 
-  /* Type: system faces render instantly on slow networks; the scale is a major third (1.25). */
-  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --text-sm: 0.875rem;
-  --text-md: 1rem;
-  --text-lg: 1.25rem;
-  --text-xl: 1.563rem;
-  --text-2xl: 1.953rem;
-  --leading: 1.5;
+  /* Type */
+  --font: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.875rem;
 
   /* Space and shape */
   --space-1: 8px;
@@ -33,9 +47,19 @@
   --space-3: 24px;
   --space-4: 32px;
   --space-6: 48px;
-  --radius-sm: 6px;
+  --radius-sm: 8px;
   --radius-md: 10px;
-  --target: 48px; /* WCAG 2.5.5 touch target */
-  --sidebar: 264px;
-  --content: 960px;
+  --radius-lg: 14px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+  --shadow-lg: 0 12px 24px -6px rgba(16, 24, 40, 0.18);
+  --target: 48px; /* WCAG 2.5.5 touch target on phones */
+  --control: 40px; /* buttons and inputs on wide screens */
+  --sidebar: 248px;
+  --content: 1120px;
+}
+
+@media (max-width: 959px) {
+  :root {
+    --control: var(--target);
+  }
 }

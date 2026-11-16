@@ -1,28 +1,43 @@
 // Design system builders. Text always goes in as text nodes (see el), never as HTML.
 import { ApiError } from '../api.ts';
 import { el } from '../dom.ts';
+import { icon, type IconName } from './icons.ts';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 export function button(
   label: string,
   onClick?: (event: MouseEvent) => void,
-  options: { variant?: ButtonVariant; type?: 'button' | 'submit'; small?: boolean } = {},
+  options: { variant?: ButtonVariant; type?: 'button' | 'submit'; small?: boolean; icon?: IconName } = {},
 ): HTMLButtonElement {
   const variant = options.variant ?? 'secondary';
   const classes = ['button', `button--${variant}`];
   if (options.small) {
     classes.push('button--small');
   }
-  const element = el('button', { type: options.type ?? 'button', class: classes.join(' ') }, label);
+  const element = el('button', { type: options.type ?? 'button', class: classes.join(' ') });
+  if (options.icon) {
+    element.append(icon(options.icon));
+  }
+  element.append(label);
   if (onClick) {
     element.addEventListener('click', onClick);
   }
   return element;
 }
 
-export function link(label: string, href: string, variant: ButtonVariant = 'secondary'): HTMLAnchorElement {
-  return el('a', { href, class: `button button--${variant}` }, label);
+export function link(
+  label: string,
+  href: string,
+  variant: ButtonVariant = 'secondary',
+  options: { small?: boolean; icon?: IconName } = {},
+): HTMLAnchorElement {
+  const element = el('a', { href, class: `button button--${variant}${options.small ? ' button--small' : ''}` });
+  if (options.icon) {
+    element.append(icon(options.icon));
+  }
+  element.append(label);
+  return element;
 }
 
 let fieldCount = 0;
@@ -45,13 +60,14 @@ export function field<T extends HTMLInputElement | HTMLSelectElement | HTMLTextA
   control.classList.add('input');
   const error = el('p', { class: 'field__error', id: `${id}-error` });
   const described = [`${id}-error`];
-  const children: Node[] = [el('label', { class: 'field__label', for: id }, label)];
+  // Helper text sits under the control, so fields side by side keep their inputs aligned.
+  const children: Node[] = [el('label', { class: 'field__label', for: id }, label), control];
   if (hint) {
     children.push(el('p', { class: 'field__hint', id: `${id}-hint` }, hint));
     described.push(`${id}-hint`);
   }
   control.setAttribute('aria-describedby', described.join(' '));
-  children.push(control, error);
+  children.push(error);
   return {
     root: el('div', { class: 'field' }, ...children),
     control,
@@ -92,9 +108,21 @@ export function checkbox(label: string, checked = false): { root: HTMLLabelEleme
 
 export type BadgeKind = 'present' | 'absent' | 'risk' | 'neutral';
 
+// Screens pass a symbol; the badge draws the matching line icon.
+const BADGE_ICONS: Record<string, IconName> = {
+  '✓': 'check',
+  '✗': 'x',
+  '⚠': 'alert',
+  '!': 'alert',
+  '●': 'dot',
+  '■': 'square',
+  '○': 'circle',
+  '↩': 'undo',
+};
+
 // Icon and text always travel together, so the state never depends on color alone.
-export function badge(kind: BadgeKind, icon: string, text: string): HTMLElement {
-  return el('span', { class: `badge badge--${kind}` }, el('span', { 'aria-hidden': 'true' }, icon), text);
+export function badge(kind: BadgeKind, symbol: string, text: string): HTMLElement {
+  return el('span', { class: `badge badge--${kind}` }, icon(BADGE_ICONS[symbol] ?? 'dot'), text);
 }
 
 export function riskBadge(): HTMLElement {
@@ -102,12 +130,29 @@ export function riskBadge(): HTMLElement {
 }
 
 export function message(kind: 'error' | 'success' | 'info', text: string): HTMLElement {
-  const icon = kind === 'error' ? '✗' : kind === 'success' ? '✓' : 'ℹ';
+  const name: IconName = kind === 'error' ? 'alert' : kind === 'success' ? 'check' : 'circle';
   return el(
     'p',
     { class: `message message--${kind}`, role: kind === 'error' ? 'alert' : 'status' },
-    el('span', { 'aria-hidden': 'true' }, icon),
+    icon(name),
     el('span', {}, text),
+  );
+}
+
+// Initials of the first and last names, as a quick visual anchor next to a person's name.
+export function avatar(fullName: string): HTMLElement {
+  const parts = fullName.trim().split(/\s+/);
+  const initials = (parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1][0] : '');
+  return el('span', { class: 'avatar', 'aria-hidden': 'true' }, initials.toUpperCase());
+}
+
+export function stat(iconName: IconName, label: string, value: string, note: string): HTMLElement {
+  return el(
+    'div',
+    { class: 'stat' },
+    el('p', { class: 'stat__label' }, icon(iconName), label),
+    el('p', { class: 'stat__value' }, value),
+    el('p', { class: 'stat__note' }, note),
   );
 }
 
@@ -139,10 +184,12 @@ export function rows(...items: HTMLElement[]): HTMLUListElement {
   return el('ul', { class: 'rows' }, ...items);
 }
 
-export function row(main: Node[], actions: Node[] = []): HTMLLIElement {
+// A list row: optional leading element (an avatar), main text and actions on the right.
+export function row(main: Node[], actions: Node[] = [], leading?: Node): HTMLLIElement {
   return el(
     'li',
     { class: 'row' },
+    ...(leading ? [leading] : []),
     el('div', { class: 'row__main' }, ...main),
     el('div', { class: 'row__actions' }, ...actions),
   );

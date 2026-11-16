@@ -1,7 +1,7 @@
 import { api, type Activity, type Beneficiary, type BeneficiaryRequest, type Delivery } from '../api.ts';
 import { context } from '../context.ts';
 import {
-
+  avatar,
   button,
   empty,
   errorText,
@@ -83,6 +83,7 @@ export async function renderBeneficiaries(main: HTMLElement): Promise<void> {
                       ),
                     ],
                     [link('Ver ficha', `#/beneficiarios/${beneficiary.id}`)],
+                    avatar(beneficiary.fullName),
                   ),
                 ),
               ),

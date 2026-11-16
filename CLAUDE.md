@@ -49,8 +49,9 @@ Tela que só combina dados de outros módulos (ex.: calendário) não vira módu
 - Payloads JSON enxutos; índices compostos nas consultas por turma e beneficiário. Meta: tela em < 3,0 s em rede móvel lenta.
 
 **Front-end e acessibilidade (WCAG 2.1 AA)**
-- Design system próprio no `web/`: tokens em CSS (cor, tipografia, espaçamento) e componentes reutilizáveis. Sem biblioteca de UI.
-- Paleta e logo do repo `ong-lar-de-margarida-front`, cores escurecidas até contraste ≥ 4,5:1. Sem fotos de crianças.
+- Design system próprio em `web/src/design-system/`: tokens em CSS (cor, tipografia, espaçamento), componentes reutilizáveis e ícones SVG próprios. Sem biblioteca de UI.
+- Visual de plataforma: base neutra com uma cor de destaque (provisória `#4f46e5`, a definir com a ONG); cor só com significado, sempre com ícone e texto. Sem fotos de crianças.
+- Fonte Inter (licença OFL) servida de `web/src/design-system/fonts/`: única exceção à regra de não adicionar dependência.
 - Mobile-first (360px); alvos de toque ≥ 48×48px com espaçamento ≥ 8px.
 - Alertas multimodais: cor + ícone/borda + texto (`Presente`, `Ausente`, `Risco de Evasão`).
 - Interfaces TypeScript espelham os DTOs do back-end.

@@ -1,32 +1,42 @@
 import { context, ROLE_LABEL } from './context.ts';
+import { icon, type IconName } from './design-system/icons.ts';
+import { avatar } from './design-system/ui.ts';
 import { el } from './dom.ts';
 
 interface NavItem {
   href: string;
   label: string;
+  icon: IconName;
   visible: () => boolean;
 }
 
+// Daily work first; management areas in their own group.
 const NAV: NavItem[] = [
-  { href: '#/', label: 'Início', visible: () => true },
-  { href: '#/turmas', label: 'Turmas', visible: () => true },
-  { href: '#/beneficiarios', label: 'Beneficiários', visible: () => true },
-  { href: '#/eventos', label: 'Eventos', visible: () => true },
-  { href: '#/calendario', label: 'Calendário', visible: () => true },
-  { href: '#/assistencia', label: 'Assistência', visible: () => context.manages },
-  { href: '#/equipe', label: 'Equipe', visible: () => context.is('ROLE_ADMIN') },
-  { href: '#/perfil', label: 'Meu perfil', visible: () => true },
+  { href: '#/', label: 'Início', icon: 'home', visible: () => true },
+  { href: '#/turmas', label: 'Turmas', icon: 'book', visible: () => true },
+  { href: '#/beneficiarios', label: 'Beneficiários', icon: 'people', visible: () => true },
+  { href: '#/eventos', label: 'Eventos', icon: 'star', visible: () => true },
+  { href: '#/calendario', label: 'Calendário', icon: 'calendar', visible: () => true },
 ];
+
+const MANAGEMENT: NavItem[] = [
+  { href: '#/assistencia', label: 'Assistência', icon: 'box', visible: () => context.manages },
+  { href: '#/equipe', label: 'Equipe', icon: 'user', visible: () => context.is('ROLE_ADMIN') },
+];
+
+const ACCOUNT: NavItem[] = [{ href: '#/perfil', label: 'Meu perfil', icon: 'settings', visible: () => true }];
+
+function navLinks(items: NavItem[]): HTMLElement[] {
+  return items
+    .filter((item) => item.visible())
+    .map((item) => el('li', {}, el('a', { href: item.href, class: 'nav__link' }, icon(item.icon), item.label)));
+}
 
 // Side menu on wide screens; on phones it slides in from the menu button in the top bar.
 export function renderShell(root: HTMLElement, onLogout: () => void): HTMLElement {
   const main = el('main', { class: 'shell__main', id: 'conteudo', tabindex: '-1' });
 
-  const links = NAV.filter((item) => item.visible()).map((item) =>
-    el('li', {}, el('a', { href: item.href, class: 'nav__link' }, item.label)),
-  );
-
-  const logout = el('button', { type: 'button', class: 'nav__logout' }, 'Sair');
+  const logout = el('button', { type: 'button', class: 'nav__logout', 'aria-label': 'Sair', title: 'Sair' }, icon('logout'));
   logout.addEventListener('click', onLogout);
 
   const nav = el(
@@ -35,24 +45,33 @@ export function renderShell(root: HTMLElement, onLogout: () => void): HTMLElemen
     el(
       'div',
       { class: 'nav__brand' },
-      el('img', { src: '/logo.jpg', alt: '', width: '48', height: '48' }),
+      el('span', { class: 'brand-mark', 'aria-hidden': 'true' }, 'Z'),
       el('div', {}, el('p', { class: 'nav__name' }, 'Zelo'), el('p', { class: 'nav__org' }, 'Lar de Margarida')),
     ),
-    el('ul', { class: 'nav__list' }, ...links),
+    el('ul', { class: 'nav__list' }, ...navLinks(NAV)),
+    ...(context.manages
+      ? [el('p', { class: 'nav__group' }, 'Gestão'), el('ul', { class: 'nav__list' }, ...navLinks(MANAGEMENT))]
+      : []),
+    el('p', { class: 'nav__group' }, 'Conta'),
+    el('ul', { class: 'nav__list' }, ...navLinks(ACCOUNT)),
     el(
       'div',
       { class: 'nav__footer' },
-      el('p', { class: 'nav__user' }, context.profile.fullName),
-      el('p', { class: 'nav__role' }, ROLE_LABEL[context.profile.role]),
+      avatar(context.profile.fullName),
+      el(
+        'div',
+        { class: 'nav__who' },
+        el('p', { class: 'nav__user' }, context.profile.fullName),
+        el('p', { class: 'nav__role' }, ROLE_LABEL[context.profile.role]),
+      ),
       logout,
     ),
   );
 
   const toggle = el(
     'button',
-    { type: 'button', class: 'topbar__menu', 'aria-expanded': 'false', 'aria-controls': 'menu' },
-    el('span', { 'aria-hidden': 'true' }, '☰'),
-    ' Menu',
+    { type: 'button', class: 'topbar__menu', 'aria-expanded': 'false', 'aria-controls': 'menu', 'aria-label': 'Abrir menu' },
+    icon('menu'),
   );
   const setOpen = (open: boolean) => {
     toggle.setAttribute('aria-expanded', String(open));
@@ -76,7 +95,7 @@ export function renderShell(root: HTMLElement, onLogout: () => void): HTMLElemen
     'header',
     { class: 'topbar' },
     toggle,
-    el('p', { class: 'topbar__name' }, el('img', { src: '/logo.jpg', alt: '', width: '32', height: '32' }), 'Zelo'),
+    el('p', { class: 'topbar__name' }, el('span', { class: 'brand-mark', 'aria-hidden': 'true' }, 'Z'), 'Zelo'),
   );
 
   root.replaceChildren(

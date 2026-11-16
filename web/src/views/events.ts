@@ -1,6 +1,7 @@
 import { api, type Participant, type StaffMember, type ZeloEvent } from '../api.ts';
 import { context } from '../context.ts';
 import {
+  avatar,
   badge,
   button,
   checkbox,
@@ -278,6 +279,7 @@ async function participantsSection(container: HTMLElement, event: ZeloEvent): Pr
         participant.attended ? badge('present', '✓', 'Participou') : badge('neutral', '○', 'Inscrito'),
       ],
       actions,
+      avatar(participant.fullName),
     );
   });
 

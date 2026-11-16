@@ -10,6 +10,7 @@ import {
 } from '../api.ts';
 import { context } from '../context.ts';
 import {
+  avatar,
   badge,
   button,
   checkbox,
@@ -30,6 +31,7 @@ import {
   tabs,
   textarea,
 } from '../design-system/ui.ts';
+import { icon, type IconName } from '../design-system/icons.ts';
 import { el } from '../dom.ts';
 import {
   addMonths,
@@ -342,10 +344,10 @@ function finishForm(activity: Activity, main: HTMLElement): HTMLElement {
 
 type Mark = 'present' | 'absent';
 
-const MARK_LABEL: Record<Mark | 'unmarked', { icon: string; text: string }> = {
-  present: { icon: '✓', text: 'Presente' },
-  absent: { icon: '✗', text: 'Ausente' },
-  unmarked: { icon: '○', text: 'Não marcado' },
+const MARK_LABEL: Record<Mark | 'unmarked', { icon: IconName; text: string }> = {
+  present: { icon: 'check', text: 'Presente' },
+  absent: { icon: 'x', text: 'Ausente' },
+  unmarked: { icon: 'circle', text: 'Não marcado' },
 };
 
 async function attendanceTab(body: HTMLElement, activity: Activity, date = today()): Promise<void> {
@@ -385,18 +387,24 @@ async function attendanceTab(body: HTMLElement, activity: Activity, date = today
   const correcting = marks.size > 0;
 
   const progress = el('p', { class: 'progress', 'aria-live': 'polite' });
+  const bar = el('span', { class: 'progress-bar__fill' });
   const feedback = el('div', {});
   const save = button(correcting ? 'Salvar correção' : 'Salvar chamada', undefined, { variant: 'primary' });
-  const markAll = button('Todos presentes', undefined, { small: true });
+  const markRest = button('Restantes presentes', undefined, { small: true, icon: 'check' });
 
   const cards = students.map((student) => attendanceCard(student, marks, notes, () => update()));
   const update = () => {
     progress.textContent = `${marks.size} de ${students.length} marcados`;
+    bar.style.width = `${Math.round((100 * marks.size) / students.length)}%`;
     save.disabled = marks.size < students.length;
+    markRest.disabled = marks.size === students.length;
     feedback.replaceChildren();
   };
-  markAll.addEventListener('click', () => {
-    students.forEach((student) => marks.set(student.beneficiaryId, 'present'));
+  // Marks only who is still unmarked, so absences already chosen are kept.
+  markRest.addEventListener('click', () => {
+    students
+      .filter((student) => !marks.has(student.beneficiaryId))
+      .forEach((student) => marks.set(student.beneficiaryId, 'present'));
     cards.forEach((card) => card.paint());
     update();
   });
@@ -432,7 +440,12 @@ async function attendanceTab(body: HTMLElement, activity: Activity, date = today
     correcting
       ? message('info', `A chamada de ${formatDate(date)} já foi feita. Altere o que precisar e salve a correção.`)
       : el('span', {}),
-    el('div', { class: 'toolbar' }, progress, markAll),
+    el(
+      'div',
+      { class: 'attendance-summary' },
+      el('div', { class: 'progress-bar', 'aria-hidden': 'true' }, bar),
+      el('div', { class: 'toolbar' }, progress, markRest),
+    ),
     el('ul', { class: 'attendance-cards', 'aria-label': 'Alunos' }, ...cards.map((card) => card.root)),
     el('div', { class: 'footer-bar' }, feedback, save),
   );
@@ -447,8 +460,16 @@ function attendanceCard(
 ): { root: HTMLElement; paint: () => void } {
   const id = student.beneficiaryId;
   const state = el('span', { class: 'attendance-card__state' });
-  const present = el('button', { type: 'button', class: 'toggle toggle--present', 'aria-pressed': 'false' }, '✓ Presente');
-  const absent = el('button', { type: 'button', class: 'toggle toggle--absent', 'aria-pressed': 'false' }, '✗ Ausente');
+  const present = el(
+    'button',
+    { type: 'button', class: 'toggle toggle--present', 'aria-pressed': 'false', 'aria-label': 'Presente', title: 'Presente' },
+    icon('check'),
+  );
+  const absent = el(
+    'button',
+    { type: 'button', class: 'toggle toggle--absent', 'aria-pressed': 'false', 'aria-label': 'Ausente', title: 'Ausente' },
+    icon('x'),
+  );
   const note = input({ maxlength: '255', value: notes.get(id) ?? '', 'aria-label': `Observação sobre ${student.fullName}` });
   note.classList.add('input');
   note.addEventListener('input', () => notes.set(id, note.value));
@@ -456,22 +477,27 @@ function attendanceCard(
   if (notes.get(id)) {
     noteBox.open = true;
   }
-  const name = el('span', { class: 'attendance-card__name' }, student.fullName);
+  const info = el('div', { class: 'attendance-card__info' }, el('span', { class: 'attendance-card__name' }, student.fullName), state);
   if (student.dropoutRisk) {
-    name.append(' ', riskBadge());
+    info.append(riskBadge());
   }
   const root = el(
     'li',
     { class: 'attendance-card' },
-    el('div', { class: 'attendance-card__header' }, name, state),
-    el('div', { class: 'attendance-card__actions', role: 'group', 'aria-label': `Presença de ${student.fullName}` }, present, absent),
+    el(
+      'div',
+      { class: 'attendance-card__header' },
+      avatar(student.fullName),
+      info,
+      el('div', { class: 'attendance-card__actions', role: 'group', 'aria-label': `Presença de ${student.fullName}` }, present, absent),
+    ),
     noteBox,
   );
   const paint = () => {
     const mark = marks.get(id);
     const label = MARK_LABEL[mark ?? 'unmarked'];
     root.dataset.state = mark ?? 'unmarked';
-    state.replaceChildren(el('span', { 'aria-hidden': 'true' }, label.icon), ` ${label.text}`);
+    state.replaceChildren(icon(label.icon), label.text);
     present.setAttribute('aria-pressed', String(mark === 'present'));
     absent.setAttribute('aria-pressed', String(mark === 'absent'));
   };
@@ -488,9 +514,9 @@ function attendanceCard(
 
 async function diaryTab(body: HTMLElement, activity: Activity, month: string): Promise<void> {
   const { from, to } = monthRange(month);
-  const previous = button('Mês anterior', () => void diaryTab(body, activity, addMonths(month, -1)), { small: true });
-  const next = button('Próximo mês', () => void diaryTab(body, activity, addMonths(month, 1)), { small: true });
-  const print = button('Imprimir diário', () => window.print(), { small: true });
+  const previous = iconButton('chevronLeft', 'Mês anterior', () => void diaryTab(body, activity, addMonths(month, -1)));
+  const next = iconButton('chevronRight', 'Próximo mês', () => void diaryTab(body, activity, addMonths(month, 1)));
+  const print = button('Imprimir', () => window.print(), { small: true, icon: 'print' });
   const grid = el('div', {}, loading());
   body.replaceChildren(
     el(
@@ -538,22 +564,31 @@ function diaryTable(diary: Diary): HTMLElement {
   );
   const lines = diary.students.map((student) => {
     const byDate = new Map(student.marks.map((mark) => [mark.date, mark]));
-    const name = el('th', { scope: 'row', class: 'diary__student' }, el('span', {}, student.fullName));
+    const who = el('div', { class: 'diary__who' }, el('span', { class: 'diary__name' }, student.fullName));
     if (student.enrollmentStatus === 'LEFT') {
-      name.append(badge('neutral', '↩', `Saiu em ${formatDate(student.leftAt ?? '')}`));
+      who.append(badge('neutral', '↩', `Saiu em ${formatDate(student.leftAt ?? '')}`));
     }
     if (student.dropoutRisk) {
-      name.append(riskBadge());
+      who.append(riskBadge());
+    }
+    const name = el('th', { scope: 'row', class: 'diary__student' }, avatar(student.fullName), who);
+    const rate = el('td', { class: 'diary__rate' });
+    if (student.attendanceRate === null) {
+      rate.append('–');
+    } else {
+      const fill = el('span', { class: 'rate-bar__fill' });
+      fill.style.width = `${student.attendanceRate}%`;
+      rate.append(el('span', { class: 'rate-bar', 'aria-hidden': 'true' }, fill), `${student.attendanceRate}%`);
     }
     return el(
       'tr',
       { 'data-left': String(student.enrollmentStatus === 'LEFT') },
       name,
-      el('td', { class: 'diary__rate' }, student.attendanceRate === null ? '–' : `${student.attendanceRate}%`),
+      rate,
       ...diary.dates.map((date) => {
         const mark = byDate.get(date);
         if (!mark) {
-          return el('td', { class: 'diary__cell' }, el('span', { 'aria-label': 'sem registro' }, '·'));
+          return el('td', { class: 'diary__cell' }, el('span', { class: 'diary__none', 'aria-label': 'sem chamada' }, '–'));
         }
         const cell = el(
           'td',
@@ -579,7 +614,7 @@ function diaryLegend(): HTMLElement {
   return el(
     'p',
     { class: 'diary-legend' },
-    'P = presente, F = falta, · = sem chamada, * = tem observação (passe o mouse ou toque para ler). ',
+    'P = presente, F = falta, – = sem chamada, * = tem observação (passe o mouse ou toque para ler). ',
     'A frequência considera todas as chamadas do aluno na turma.',
   );
 }
@@ -623,6 +658,7 @@ async function studentsTab(body: HTMLElement, activity: Activity): Promise<void>
         status,
       ],
       actions,
+      avatar(enrollment.fullName),
     );
   });
 
@@ -672,4 +708,14 @@ function leaveControl(activity: Activity, enrollment: Enrollment, reload: () => 
   }, { small: true });
   wrap.append(open);
   return wrap;
+}
+
+function iconButton(name: IconName, label: string, onClick: () => void): HTMLButtonElement {
+  const element = el(
+    'button',
+    { type: 'button', class: 'button button--secondary button--small button--icon', 'aria-label': label, title: label },
+    icon(name),
+  );
+  element.addEventListener('click', onClick);
+  return element;
 }

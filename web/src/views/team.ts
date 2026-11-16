@@ -1,6 +1,7 @@
 import { api, type Role, type StaffMember } from '../api.ts';
 import { context, ROLE_LABEL } from '../context.ts';
 import {
+  avatar,
   badge,
   button,
   errorText,
@@ -68,6 +69,7 @@ export async function renderTeam(main: HTMLElement): Promise<void> {
                 : []),
             ],
             actions,
+            avatar(member.fullName),
           );
         }),
       ),
