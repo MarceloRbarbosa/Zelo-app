@@ -1,0 +1,41 @@
+/* Zelo design tokens.
+   Brand colors come from the Lar de Margarida palette (ong-lar-de-margarida-front/assets/css/variables.css):
+   sunflower yellow and bark brown. Every text/background pair below keeps a contrast of at least 4.5:1. */
+:root {
+  /* Color */
+  --sunflower: #fad25a; /* brand; only behind bark text (8.6:1) */
+  --sunflower-soft: #fdf0c4;
+  --bark: #502d07; /* text and navigation */
+  --bark-soft: #6e4a22;
+  --sage: #eef0ea; /* page background */
+  --paper: #ffffff; /* surfaces */
+  --line: #cfd2c8;
+  --ink-muted: #565a4f; /* secondary text, 6.9:1 on paper */
+  --present: #1e6b34;
+  --present-soft: #e6f2e9;
+  --absent: #b42318;
+  --absent-soft: #fbe9e7;
+  --risk: #8a3b00; /* dropout risk: dark amber, paired with an icon and the text "Risco de evasão" */
+  --risk-soft: #fff1e0;
+
+  /* Type: system faces render instantly on slow networks; the scale is a major third (1.25). */
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.563rem;
+  --text-2xl: 1.953rem;
+  --leading: 1.5;
+
+  /* Space and shape */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-6: 48px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --target: 48px; /* WCAG 2.5.5 touch target */
+  --sidebar: 264px;
+  --content: 960px;
+}

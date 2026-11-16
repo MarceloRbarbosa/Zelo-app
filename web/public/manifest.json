@@ -1,0 +1,15 @@
+{
+  "name": "Zelo — Lar de Margarida",
+  "short_name": "Zelo",
+  "description": "Chamada, turmas, eventos e assistência da equipe do Lar de Margarida.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eef0ea",
+  "theme_color": "#502d07",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
