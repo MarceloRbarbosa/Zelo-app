@@ -36,10 +36,9 @@ Voluntário. Beneficiários não acessam a plataforma.
   - aviso de risco de evasão com o nome de cada criança; o nome abre os dados para consulta (turmas, faltas seguidas, última falta e telefone);
   - frequência do mês (presenças sobre o total de registros das chamadas), beneficiários ativos, turmas ativas com alunos cursando e saídas de turma no mês;
   - frequência por turma;
-  - chamadas pendentes: aula pelos horários, de turma ativa com alunos, sem chamada registrada;
   - eventos agendados nos próximos 30 dias;
   - só admin e coordenação: entregas do mês por item e itens ativos sem saldo.
-  O voluntário vê os números só das turmas em que é responsável. Número sem medição aparece como `—`, diferente de zero medido; "chamadas em dia" só aparece quando há turma com alunos; as ações de criar turma ou evento só aparecem para quem pode criá-los.
+  O voluntário vê os números só das turmas em que é responsável. Número sem medição aparece como `—`, diferente de zero medido; as ações de criar turma ou evento só aparecem para quem pode criá-los. A chamada é feita só dentro da turma, não na tela inicial nem na agenda.
 
 ## Modelo de dados
 - **`staff_members`:** `id`, `full_name` (150, not null), `email` (100, unique, not null), `password_hash` (BCrypt), `member_type` (`VOLUNTEER`/`PROFESSIONAL`/`COORDINATOR`), `role` (`ROLE_ADMIN`/`ROLE_COORDINATOR`/`ROLE_VOLUNTEER`), `status` (`ACTIVE`/`BLOCKED`), `must_change_password`, `failed_login_attempts`, `locked_until`, `created_at`.

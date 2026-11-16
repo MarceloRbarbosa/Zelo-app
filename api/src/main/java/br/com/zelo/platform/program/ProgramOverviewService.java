@@ -36,7 +36,7 @@ public class ProgramOverviewService {
 	}
 
 	// Figures of the activities that run in the period; volunteers only see the activities they are responsible
-	// for. The app sends the period up to today, so every scheduled date without a roll call is pending.
+	// for.
 	@Transactional(readOnly = true)
 	public ProgramOverviewResponse get(LocalDate from, LocalDate to, CurrentStaff requester) {
 		if (to.isBefore(from) || ChronoUnit.DAYS.between(from, to) >= DiaryService.MAX_PERIOD_DAYS) {
@@ -49,7 +49,7 @@ public class ProgramOverviewService {
 			.sorted(Comparator.comparing(Activity::getTitle))
 			.toList();
 		if (activities.isEmpty()) {
-			return new ProgramOverviewResponse(from, to, null, 0, 0, List.of(), List.of());
+			return new ProgramOverviewResponse(from, to, null, 0, 0, List.of());
 		}
 		List<Long> activityIds = activities.stream().map(Activity::getId).toList();
 
@@ -78,27 +78,9 @@ public class ProgramOverviewService {
 					students(activity, activeEnrollments)))
 			.toList();
 
-		// A roll call needs students, so activities without any are never pending.
-		List<ProgramOverviewResponse.PendingRollCall> pending = activities.stream()
-			.filter(activity -> activity.isActive() && students(activity, activeEnrollments) > 0)
-			.flatMap(activity -> {
-				Set<LocalDate> done = rollCallsByActivity.getOrDefault(activity.getId(), List.of())
-					.stream()
-					.map(RollCallTotals::getAttendanceDate)
-					.collect(Collectors.toSet());
-				return activity.scheduledDates(from, to)
-					.stream()
-					.filter(date -> !done.contains(date))
-					.map(date -> new ProgramOverviewResponse.PendingRollCall(activity.getId(), activity.getTitle(),
-							date));
-			})
-			.sorted(Comparator.comparing(ProgramOverviewResponse.PendingRollCall::date)
-				.thenComparing(ProgramOverviewResponse.PendingRollCall::title))
-			.toList();
-
 		return new ProgramOverviewResponse(from, to, rate(rollCalls),
 				overviews.stream().mapToLong(ProgramOverviewResponse.ActivityOverview::activeEnrollments).sum(), left,
-				overviews, pending);
+				overviews);
 	}
 
 	private static long students(Activity activity, Map<Long, Long> activeEnrollments) {

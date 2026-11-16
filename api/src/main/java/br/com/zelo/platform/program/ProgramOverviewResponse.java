@@ -9,8 +9,7 @@ public record ProgramOverviewResponse(
 		Integer attendanceRate,
 		long activeEnrollments,
 		long leftEnrollments,
-		List<ActivityOverview> activities,
-		List<PendingRollCall> pendingRollCalls) {
+		List<ActivityOverview> activities) {
 
 	public record ActivityOverview(
 			Long activityId,
@@ -18,9 +17,6 @@ public record ProgramOverviewResponse(
 			ActivityStatus status,
 			Integer attendanceRate,
 			long activeEnrollments) {
-	}
-
-	public record PendingRollCall(Long activityId, String title, LocalDate date) {
 	}
 
 }

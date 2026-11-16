@@ -62,8 +62,8 @@ class ProgramOverviewApiIT {
 	}
 
 	@Test
-	void summarizesAttendanceStudentsDeparturesAndPendingRollCalls() throws Exception {
-		// Monday 2026-11-02: Reading 1 of 2 present, Music 2 of 2 present. Wednesday 2026-11-04: no roll call.
+	void summarizesAttendanceStudentsAndDepartures() throws Exception {
+		// Monday 2026-11-02: Reading 1 of 2 present, Music 2 of 2 present.
 		attendance(1, 1, "2026-11-02", true);
 		attendance(1, 2, "2026-11-02", false);
 		attendance(2, 1, "2026-11-02", true);
@@ -81,10 +81,7 @@ class ProgramOverviewApiIT {
 			.andExpect(jsonPath("$.activities[0].title").value("Music"))
 			.andExpect(jsonPath("$.activities[0].attendanceRate").value(100))
 			.andExpect(jsonPath("$.activities[1].title").value("Reading"))
-			.andExpect(jsonPath("$.activities[1].attendanceRate").value(50))
-			.andExpect(jsonPath("$.pendingRollCalls.length()").value(1))
-			.andExpect(jsonPath("$.pendingRollCalls[0].title").value("Reading"))
-			.andExpect(jsonPath("$.pendingRollCalls[0].date").value("2026-11-04"));
+			.andExpect(jsonPath("$.activities[1].attendanceRate").value(50));
 	}
 
 	@Test
@@ -92,8 +89,7 @@ class ProgramOverviewApiIT {
 		mockMvc.perform(get(URL).with(volunteer(1)).param("from", "2026-11-02").param("to", "2026-11-04"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.activities.length()").value(1))
-			.andExpect(jsonPath("$.activities[0].title").value("Music"))
-			.andExpect(jsonPath("$.pendingRollCalls[0].title").value("Music"));
+			.andExpect(jsonPath("$.activities[0].title").value("Music"));
 	}
 
 	@Test

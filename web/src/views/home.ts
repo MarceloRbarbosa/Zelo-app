@@ -43,32 +43,11 @@ export async function renderHome(main: HTMLElement): Promise<void> {
   if (context.manages) {
     actions.push(link('Novo evento', '#/eventos/novo', 'secondary', { icon: 'plus' }));
   }
-  const todayAction = el('span', {});
-  actions.push(todayAction);
   const agenda = el('section', { class: 'agenda-card', 'aria-label': 'Agenda da ONG' }, loading());
   main.replaceChildren(pageHeader('Agenda', formatLongDay(today()), ...actions), agenda);
 
   const view: View = window.matchMedia('(max-width: 719px)').matches ? 'week' : 'month';
   void renderAgenda(agenda, view, today());
-  void renderTodayAction(todayAction);
-}
-
-// Shortcut to the first class of the day whose attendance is still missing.
-async function renderTodayAction(slot: HTMLElement): Promise<void> {
-  const date = today();
-  try {
-    const [sessions, mine] = await Promise.all([api.listClassSessions(date, date), api.listActivities()]);
-    const ownIds = new Set(mine.map((activity) => activity.id));
-    for (const session of sessions.filter((item) => item.status === 'ACTIVE' && ownIds.has(item.activityId))) {
-      const diary = await api.getDiary(session.activityId, date, date).catch(() => null);
-      if (!diary?.students.some((student) => student.marks.length > 0)) {
-        slot.replaceChildren(link('Fazer chamada de hoje', `#/turmas/${session.activityId}`, 'primary'));
-        return;
-      }
-    }
-  } catch {
-    // The shortcut is optional; the agenda still works without it.
-  }
 }
 
 async function renderAgenda(container: HTMLElement, view: View, anchor: string): Promise<void> {

@@ -188,12 +188,6 @@ export interface ActivityOverview {
   activeEnrollments: number;
 }
 
-export interface PendingRollCall {
-  activityId: number;
-  title: string;
-  date: string;
-}
-
 export interface ProgramOverview {
   from: string;
   to: string;
@@ -201,7 +195,6 @@ export interface ProgramOverview {
   activeEnrollments: number;
   leftEnrollments: number;
   activities: ActivityOverview[];
-  pendingRollCalls: PendingRollCall[];
 }
 
 // activeStaff is null for volunteers, who do not see the team.

@@ -68,12 +68,11 @@ class ProgramOverviewServiceTest {
 	}
 
 	@Test
-	void combinesAttendanceRateStudentsAndPendingRollCalls() {
-		// Reading meets on Monday and Wednesday; only Monday has a roll call.
+	void combinesAttendanceRateAndStudents() {
 		Activity reading = activity(1L, "Reading", Set.of(), DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY);
 		when(activityRepository.findAllOverlapping(FROM, TO)).thenReturn(List.of(reading));
 		when(attendanceRepository.findRollCallTotals(List.of(1L), FROM, TO))
-			.thenReturn(List.of(rollCall(1L, FROM, 4, 3)));
+			.thenReturn(List.of(rollCall(1L, 4, 3)));
 		when(enrollmentRepository.findAllByActivityIdIn(List.of(1L)))
 			.thenReturn(List.of(enrollment(1L, 10L), enrollment(1L, 11L)));
 		when(beneficiaryService.findActiveContacts(any())).thenReturn(List.of(contact(10L), contact(11L)));
@@ -84,8 +83,6 @@ class ProgramOverviewServiceTest {
 		assertThat(overview.activeEnrollments()).isEqualTo(2);
 		assertThat(overview.activities())
 			.containsExactly(new ProgramOverviewResponse.ActivityOverview(1L, "Reading", ActivityStatus.ACTIVE, 75, 2));
-		assertThat(overview.pendingRollCalls())
-			.containsExactly(new ProgramOverviewResponse.PendingRollCall(1L, "Reading", LocalDate.of(2026, 11, 4)));
 	}
 
 	@Test
@@ -94,7 +91,7 @@ class ProgramOverviewServiceTest {
 		Activity art = activity(2L, "Art", Set.of(), DayOfWeek.MONDAY);
 		when(activityRepository.findAllOverlapping(FROM, TO)).thenReturn(List.of(music, art));
 		when(attendanceRepository.findRollCallTotals(any(), any(), any()))
-			.thenReturn(List.of(rollCall(1L, FROM, 2, 2), rollCall(2L, FROM, 2, 0)));
+			.thenReturn(List.of(rollCall(1L, 2, 2), rollCall(2L, 2, 0)));
 		when(enrollmentRepository.findAllByActivityIdIn(any())).thenReturn(List.of());
 
 		ProgramOverviewResponse overview = service.get(FROM, TO, ADMIN);
@@ -106,7 +103,7 @@ class ProgramOverviewServiceTest {
 	}
 
 	@Test
-	void countsOnlyActiveBeneficiariesAndSkipsActivitiesWithoutStudents() {
+	void countsOnlyActiveBeneficiaries() {
 		Activity reading = activity(1L, "Reading", Set.of(), DayOfWeek.MONDAY);
 		when(activityRepository.findAllOverlapping(FROM, TO)).thenReturn(List.of(reading));
 		when(attendanceRepository.findRollCallTotals(any(), any(), any())).thenReturn(List.of());
@@ -117,11 +114,10 @@ class ProgramOverviewServiceTest {
 		ProgramOverviewResponse overview = service.get(FROM, TO, ADMIN);
 
 		assertThat(overview.activeEnrollments()).isZero();
-		assertThat(overview.pendingRollCalls()).isEmpty();
 	}
 
 	@Test
-	void finishedActivitiesHaveNoStudentsNorPendingRollCalls() {
+	void finishedActivitiesHaveNoStudents() {
 		Activity chess = activity(1L, "Chess", Set.of(), DayOfWeek.MONDAY);
 		chess.finish(TO);
 		when(activityRepository.findAllOverlapping(FROM, TO)).thenReturn(List.of(chess));
@@ -129,10 +125,7 @@ class ProgramOverviewServiceTest {
 		when(enrollmentRepository.findAllByActivityIdIn(any())).thenReturn(List.of(enrollment(1L, 10L)));
 		when(beneficiaryService.findActiveContacts(any())).thenReturn(List.of(contact(10L)));
 
-		ProgramOverviewResponse overview = service.get(FROM, TO, ADMIN);
-
-		assertThat(overview.activeEnrollments()).isZero();
-		assertThat(overview.pendingRollCalls()).isEmpty();
+		assertThat(service.get(FROM, TO, ADMIN).activeEnrollments()).isZero();
 	}
 
 	@Test
@@ -181,17 +174,12 @@ class ProgramOverviewServiceTest {
 		return new BeneficiaryContact(id, "Student " + id, "22900000000");
 	}
 
-	private static RollCallTotals rollCall(Long activityId, LocalDate date, long total, long present) {
+	private static RollCallTotals rollCall(Long activityId, long total, long present) {
 		return new RollCallTotals() {
 
 			@Override
 			public Long getActivityId() {
 				return activityId;
-			}
-
-			@Override
-			public LocalDate getAttendanceDate() {
-				return date;
 			}
 
 			@Override

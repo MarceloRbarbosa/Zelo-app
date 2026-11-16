@@ -81,12 +81,10 @@ export async function renderOverview(main: HTMLElement): Promise<void> {
   const strip = el('div', {});
   const stats = el('div', {}, loading());
   const attendance = el('div', {}, loading());
-  const pending = el('div', {}, loading());
   body.replaceChildren(
     strip,
     stats,
     section('Frequência por turma', attendance),
-    section('Chamadas pendentes', pending),
     upcoming,
   );
 
@@ -94,7 +92,6 @@ export async function renderOverview(main: HTMLElement): Promise<void> {
   void renderRiskStrip(strip);
   void renderStats(stats, overview, totals);
   void renderAttendance(attendance, overview);
-  void renderPending(pending, overview);
   if (context.manages) {
     const assistance = el('div', {}, loading());
     body.append(section('Assistência no mês', assistance));
@@ -322,43 +319,6 @@ function progressBar(percent: number): HTMLElement {
   const fill = el('span', { class: 'progress-bar__fill' });
   fill.style.width = `${percent}%`;
   return el('span', { class: 'progress-bar', 'aria-hidden': 'true' }, fill);
-}
-
-async function renderPending(container: HTMLElement, overview: Promise<ProgramOverview>): Promise<void> {
-  let program: ProgramOverview;
-  try {
-    program = await overview;
-  } catch (cause) {
-    container.replaceChildren(message('error', errorText(cause)));
-    return;
-  }
-  const calls = program.pendingRollCalls;
-  // "Up to date" only makes sense when there were classes to call the roll for.
-  if (!program.activities.some((activity) => activity.status === 'ACTIVE' && activity.activeEnrollments > 0)) {
-    container.replaceChildren(empty('Nenhuma turma com alunos neste mês, então não há chamada a fazer.'));
-    return;
-  }
-  if (calls.length === 0) {
-    container.replaceChildren(message('success', 'Todas as chamadas do mês estão em dia.'));
-    return;
-  }
-  // Oldest first: the class longest without a roll call needs it most.
-  container.replaceChildren(
-    rows(
-      ...calls.slice(0, LIST_LIMIT).map((call) =>
-        row(
-          [
-            el('span', { class: 'row__title' }, call.title),
-            el('span', { class: 'row__meta' }, `Aula de ${formatWeekday(call.date)}, ${formatShort(call.date)}`),
-          ],
-          [link('Fazer chamada', `#/turmas/${call.activityId}`, 'secondary', { small: true })],
-        ),
-      ),
-    ),
-    ...(calls.length > LIST_LIMIT
-      ? [el('p', { class: 'row__meta' }, `E mais ${calls.length - LIST_LIMIT} chamadas pendentes neste mês.`)]
-      : []),
-  );
 }
 
 async function renderEvents(container: HTMLElement, now: string): Promise<void> {

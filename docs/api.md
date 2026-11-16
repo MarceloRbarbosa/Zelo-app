@@ -268,8 +268,7 @@ Considera apenas beneficiários ativos, com matrícula ativa, em turmas ativas. 
   "leftEnrollments": 2,
   "activities": [
     { "activityId": 1, "title": "Capoeira infantil", "status": "ACTIVE", "attendanceRate": 75, "activeEnrollments": 12 }
-  ],
-  "pendingRollCalls": [{ "activityId": 1, "title": "Capoeira infantil", "date": "2026-11-09" }]
+  ]
 }
 ```
 
@@ -279,7 +278,6 @@ Considera apenas beneficiários ativos, com matrícula ativa, em turmas ativas. 
 | `activeEnrollments` | matrículas ativas de beneficiários ativos em turmas ativas (turma finalizada conta `0`) |
 | `leftEnrollments` | matrículas com saída (`leftAt`) dentro do período |
 | `activities` | turmas que funcionam no período, por título |
-| `pendingRollCalls` | datas de aula pelos horários, dentro do período, sem nenhuma chamada registrada; só turmas ativas com alunos; da mais antiga para a mais recente |
 
 Erros: `400` período invertido ou maior que 366 dias.
 
