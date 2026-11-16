@@ -130,6 +130,24 @@ export interface BeneficiarySearch {
   documentNumber?: string;
   activityId?: number;
   order?: 'ASC' | 'DESC';
+  status?: 'ACTIVE' | 'INACTIVE' | 'ALL';
+}
+
+export interface BeneficiaryDocument {
+  id: number;
+  title: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  uploadedAt: string;
+}
+
+export interface DataRemoval {
+  id: number;
+  beneficiaryId: number;
+  removedAt: string;
+  removedBy: string | null;
+  note: string;
 }
 
 export interface AttendanceEntry {
@@ -205,6 +223,7 @@ export interface Receipt {
   receivedAt: string;
   donor: string | null;
   notes: string | null;
+  recordedBy: string | null;
 }
 
 export interface Delivery {
@@ -216,16 +235,20 @@ export interface Delivery {
   quantity: number;
   deliveredAt: string;
   notes: string | null;
+  recordedBy: string | null;
 }
 
 export class ApiError extends Error {
   readonly status: number;
   readonly errors: Record<string, string>;
+  // Extra ProblemDetail fields, e.g. who already has a CPF on a 409.
+  readonly problem: Record<string, unknown>;
 
-  constructor(status: number, detail: string, errors: Record<string, string> = {}) {
+  constructor(status: number, detail: string, errors: Record<string, string> = {}, problem: Record<string, unknown> = {}) {
     super(detail);
     this.status = status;
     this.errors = errors;
+    this.problem = problem;
   }
 }
 
@@ -253,17 +276,22 @@ export const session = {
 
 export const UNAUTHORIZED_EVENT = 'zelo:unauthorized';
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+// Files go as multipart form data (the browser sets the boundary); everything else as JSON.
+async function send(method: string, path: string, body?: unknown): Promise<Response> {
+  const headers: Record<string, string> = {};
   const token = session.token();
   if (token) {
     headers.Authorization = `Bearer ${token}`;
+  }
+  const isForm = body instanceof FormData;
+  if (body !== undefined && !isForm) {
+    headers['Content-Type'] = 'application/json';
   }
 
   const response = await fetch(`/api/v1${path}`, {
     method,
     headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
   });
 
   if (response.status === 401 && token) {
@@ -271,12 +299,17 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
   }
   if (!response.ok) {
-    const problem = (await response.json().catch(() => ({}))) as {
+    const problem = (await response.json().catch(() => ({}))) as Record<string, unknown> & {
       detail?: string;
       errors?: Record<string, string>;
     };
-    throw new ApiError(response.status, problem.detail ?? response.statusText, problem.errors);
+    throw new ApiError(response.status, problem.detail ?? response.statusText, problem.errors, problem);
   }
+  return response;
+}
+
+async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const response = await send(method, path, body);
   if (response.status === 204) {
     return undefined as T;
   }
@@ -338,6 +371,25 @@ export const api = {
   updateBeneficiary: (id: number, body: BeneficiaryRequest) =>
     request<Beneficiary>('PUT', `/beneficiaries/${id}`, body),
   deactivateBeneficiary: (id: number) => request<void>('DELETE', `/beneficiaries/${id}`),
+  reactivateBeneficiary: (id: number) => request<Beneficiary>('POST', `/beneficiaries/${id}/reactivate`),
+
+  listDocuments: (beneficiaryId: number) =>
+    request<BeneficiaryDocument[]>('GET', `/beneficiaries/${beneficiaryId}/documents`),
+  uploadDocument: (beneficiaryId: number, title: string, file: File) => {
+    const form = new FormData();
+    form.append('title', title);
+    form.append('file', file);
+    return request<BeneficiaryDocument>('POST', `/beneficiaries/${beneficiaryId}/documents`, form);
+  },
+  // Downloads need the token header, so the file comes as a blob instead of a plain link.
+  downloadDocument: async (beneficiaryId: number, documentId: number) =>
+    (await send('GET', `/beneficiaries/${beneficiaryId}/documents/${documentId}/content`)).blob(),
+  deleteDocument: (beneficiaryId: number, documentId: number) =>
+    request<void>('DELETE', `/beneficiaries/${beneficiaryId}/documents/${documentId}`),
+
+  listDataRemovals: () => request<DataRemoval[]>('GET', '/organization/data-removals'),
+  removeBeneficiaryData: (beneficiaryId: number, note: string) =>
+    request<DataRemoval>('POST', `/organization/beneficiaries/${beneficiaryId}/data-removal`, { note }),
 
   listEvents: (from: string, to: string) => request<ZeloEvent[]>('GET', `/events${query({ from, to })}`),
   getEvent: (id: number) => request<ZeloEvent>('GET', `/events/${id}`),
@@ -360,12 +412,12 @@ export const api = {
     request<AssistanceItem>('PUT', `/assistance/items/${id}`, { name, description, active }),
   listReceipts: (from: string, to: string) =>
     request<Receipt[]>('GET', `/assistance/receipts${query({ from, to })}`),
-  createReceipt: (body: Omit<Receipt, 'id' | 'itemName'>) =>
+  createReceipt: (body: Omit<Receipt, 'id' | 'itemName' | 'recordedBy'>) =>
     request<Receipt>('POST', '/assistance/receipts', body),
-  listDeliveries: (from: string, to: string) =>
-    request<Delivery[]>('GET', `/assistance/deliveries${query({ from, to })}`),
+  listDeliveries: (from: string, to: string, filters: { itemId?: number; beneficiaryName?: string } = {}) =>
+    request<Delivery[]>('GET', `/assistance/deliveries${query({ from, to, ...filters })}`),
   listBeneficiaryDeliveries: (beneficiaryId: number) =>
     request<Delivery[]>('GET', `/assistance/deliveries${query({ beneficiaryId })}`),
-  createDelivery: (body: Omit<Delivery, 'id' | 'itemName' | 'beneficiaryName'>) =>
+  createDelivery: (body: Omit<Delivery, 'id' | 'itemName' | 'beneficiaryName' | 'recordedBy'>) =>
     request<Delivery>('POST', '/assistance/deliveries', body),
 };

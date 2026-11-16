@@ -6,8 +6,10 @@ import { formatDate } from '../format.ts';
 // Searches every registered beneficiary by name or document; only people already registered can be picked.
 export function beneficiaryPicker(
   actionLabel: string,
-  onPick: (beneficiary: Beneficiary) => Promise<void>,
+  // Returning false means the action was called off (for example, a dialog was canceled).
+  onPick: (beneficiary: Beneficiary) => Promise<void | boolean>,
   isTaken: (id: number) => boolean = () => false,
+  status: 'ACTIVE' | 'ALL' = 'ACTIVE',
 ): HTMLElement {
   const term = field('Nome ou documento', input({ type: 'search', autocomplete: 'off' }));
   const results = el('div', { 'aria-live': 'polite' });
@@ -21,8 +23,9 @@ export function beneficiaryPicker(
     }
     results.replaceChildren(el('p', { role: 'status' }, 'Buscando…'));
     try {
+      const digits = value.replace(/[.\-\s]/g, '');
       const found = await api.searchBeneficiaries(
-        /^\d{11}$/.test(value) ? { documentNumber: value } : { name: value },
+        /^\d{11}$/.test(digits) ? { documentNumber: digits, status } : { name: value, status },
       );
       if (found.length === 0) {
         results.replaceChildren(empty('Ninguém encontrado. A pessoa precisa estar cadastrada em Beneficiários.'));
@@ -37,7 +40,10 @@ export function beneficiaryPicker(
             action.addEventListener('click', async () => {
               action.disabled = true;
               try {
-                await onPick(beneficiary);
+                if ((await onPick(beneficiary)) === false) {
+                  action.disabled = false;
+                  return;
+                }
                 action.textContent = 'Incluído';
               } catch (cause) {
                 results.prepend(message('error', errorText(cause)));

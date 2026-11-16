@@ -8,10 +8,10 @@ import { markCurrent, renderShell } from './shell.ts';
 import { renderActivities, renderActivity, renderActivityForm } from './views/activities.ts';
 import { renderAssistance } from './views/assistance.ts';
 import { renderBeneficiaries, renderBeneficiary, renderBeneficiaryForm } from './views/beneficiaries.ts';
-import { renderCalendar } from './views/calendar.ts';
 import { renderEvent, renderEventForm, renderEvents } from './views/events.ts';
 import { renderHome } from './views/home.ts';
 import { renderLogin } from './views/login.ts';
+import { renderOrganization } from './views/organization.ts';
 import { renderFirstPassword } from './views/password.ts';
 import { renderProfile } from './views/profile.ts';
 import { renderTeam } from './views/team.ts';
@@ -40,9 +40,10 @@ const ROUTES: [string, View][] = [
   ['/eventos/novo', (main) => renderEventForm(main)],
   ['/eventos/:id', (main, params) => renderEvent(main, Number(params.id))],
   ['/eventos/:id/editar', (main, params) => renderEventForm(main, Number(params.id))],
-  ['/calendario', (main) => renderCalendar(main)],
+  ['/calendario', (main) => renderHome(main)],
   ['/assistencia', (main) => renderAssistance(main)],
   ['/equipe', (main) => renderTeam(main)],
+  ['/organizacao', (main) => renderOrganization(main)],
   ['/perfil', (main) => renderProfile(main)],
 ];
 

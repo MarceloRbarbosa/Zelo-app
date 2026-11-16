@@ -221,12 +221,13 @@ async function loadReceipts(list: HTMLElement, month: string, body: HTMLElement,
       receipts.length === 0
         ? empty('Nada recebido neste mês.')
         : movementTable(
-            ['Data', 'Item', 'Quantidade', 'Doador'],
+            ['Data', 'Item', 'Quantidade', 'Doador', 'Registrado por'],
             receipts.map((receipt) => [
               formatDate(receipt.receivedAt),
               receipt.itemName,
               String(receipt.quantity),
               receipt.donor ?? '—',
+              receipt.recordedBy ?? '—',
             ]),
           ),
     );
@@ -273,7 +274,7 @@ async function deliveriesTab(body: HTMLElement, items: AssistanceItem[], month: 
         notes: notes.control.value.trim() || null,
       });
       feedback.replaceChildren(message('success', `Entrega para ${chosen.fullName} registrada.`));
-      void loadDeliveries(list, month);
+      void loadDeliveries(list, month, items);
     } catch (cause) {
       if (!showFieldErrors(cause, { quantity, deliveredAt, notes })) {
         feedback.replaceChildren(message('error', errorText(cause)));
@@ -293,31 +294,61 @@ async function deliveriesTab(body: HTMLElement, items: AssistanceItem[], month: 
     ),
     section('Entregues', list),
   );
-  await loadDeliveries(list, month);
+  await loadDeliveries(list, month, items);
 }
 
-async function loadDeliveries(list: HTMLElement, month: string): Promise<void> {
+interface DeliveryFilters {
+  name: string;
+  itemId: string;
+}
+
+// Deliveries of the month, searchable by beneficiary name and item.
+async function loadDeliveries(
+  list: HTMLElement,
+  month: string,
+  items: AssistanceItem[],
+  filters: DeliveryFilters = { name: '', itemId: '' },
+): Promise<void> {
   const { from, to } = monthRange(month);
-  list.replaceChildren(monthNav(month, (next) => void loadDeliveries(list, next)), loading());
+  const name = field('Beneficiário', input({ type: 'search', autocomplete: 'off', value: filters.name }));
+  const item = field(
+    'Item',
+    select([{ value: '', label: 'Todos' }, ...items.map((option) => ({ value: String(option.id), label: option.name }))], filters.itemId),
+  );
+  const search = el(
+    'form',
+    { class: 'form search-form', role: 'search' },
+    el('div', { class: 'form__row' }, name.root, item.root),
+    el('div', { class: 'form__actions' }, button('Buscar entregas', undefined, { type: 'submit', icon: 'search' })),
+  );
+  const current = () => ({ name: name.control.value.trim(), itemId: item.control.value });
+  search.addEventListener('submit', (event) => {
+    event.preventDefault();
+    void loadDeliveries(list, month, items, current());
+  });
+  const results = el('div', { 'aria-live': 'polite' }, loading());
+  list.replaceChildren(monthNav(month, (next) => void loadDeliveries(list, next, items, current())), search, results);
   try {
-    const deliveries: Delivery[] = await api.listDeliveries(from, to);
-    list.lastChild?.remove();
-    list.append(
+    const deliveries: Delivery[] = await api.listDeliveries(from, to, {
+      beneficiaryName: filters.name || undefined,
+      itemId: filters.itemId ? Number(filters.itemId) : undefined,
+    });
+    results.replaceChildren(
       deliveries.length === 0
-        ? empty('Nada entregue neste mês.')
+        ? empty(filters.name || filters.itemId ? 'Nenhuma entrega com esses filtros neste mês.' : 'Nada entregue neste mês.')
         : movementTable(
-            ['Data', 'Beneficiário', 'Item', 'Quantidade'],
+            ['Data', 'Beneficiário', 'Item', 'Quantidade', 'Registrado por'],
             deliveries.map((delivery) => [
               formatDate(delivery.deliveredAt),
               delivery.beneficiaryName ?? 'Beneficiário inativo',
               delivery.itemName,
               String(delivery.quantity),
+              delivery.recordedBy ?? '—',
             ]),
           ),
     );
   } catch (cause) {
-    list.lastChild?.remove();
-    list.append(message('error', errorText(cause)));
+    results.replaceChildren(message('error', errorText(cause)));
   }
 }
 

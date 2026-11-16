@@ -1,39 +1,43 @@
-/* Zelo design tokens: neutral platform look with a single accent color.
-   Color carries meaning only (accent for actions, green/red/amber for status), always paired with icon and text.
-   Every text/background pair keeps a contrast of at least 4.5:1. */
+/* Zelo design tokens: the look of a community NGO. Forest green for structure and actions, sunflower
+   (from the Lar de Margarida logo) for highlights, soft neutrals behind. Color always carries meaning and comes
+   with an icon and text. Every text/background pair keeps a contrast of at least 4.5:1. */
 @font-face {
-  font-family: Inter;
-  src: url('./fonts/inter-latin-wght-normal.woff2') format('woff2');
-  font-weight: 100 900;
+  font-family: Figtree;
+  src: url('./fonts/figtree-latin-wght-normal.woff2') format('woff2');
+  font-weight: 300 900;
   font-display: swap;
 }
 
 :root {
   /* Color */
-  --bg: #f6f7f9;
+  --bg: #f3f5f2;
   --surface: #ffffff;
-  --surface-muted: #f9fafb;
-  --line: #e4e7ec;
-  --line-strong: #d0d5dd;
-  --text: #101828;
-  --muted: #475467;
-  --subtle: #667085;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-soft: #eef2ff;
-  --accent-text: #3730a3;
+  --surface-muted: #f8faf8;
+  --line: #e1e6e1;
+  --line-strong: #cbd3cc;
+  --text: #1b2a23;
+  --muted: #4d5c55;
+  --subtle: #5f6d66;
+  --accent: #1f6b52;
+  --accent-hover: #185a45;
+  --accent-soft: #e5f1eb;
+  --accent-text: #154a39;
+  --brand-dark: #154a39;
+  --sun: #f5c542;
+  --sun-soft: #fff6d8;
+  --sun-text: #6b4a00;
   --present: #067647;
   --present-soft: #ecfdf3;
   --present-line: #abefc6;
   --absent: #b42318;
   --absent-soft: #fef3f2;
   --absent-line: #fecdca;
-  --risk: #b54708;
-  --risk-soft: #fffaeb;
-  --risk-line: #fedf89;
+  --risk: #a1480a;
+  --risk-soft: #fff4e5;
+  --risk-line: #f9d9a8;
 
   /* Type */
-  --font: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font: Figtree, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --text-xs: 0.75rem;
   --text-sm: 0.8125rem;
   --text-md: 0.9375rem;
@@ -47,14 +51,14 @@
   --space-3: 24px;
   --space-4: 32px;
   --space-6: 48px;
-  --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
-  --shadow-lg: 0 12px 24px -6px rgba(16, 24, 40, 0.18);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow: 0 1px 2px rgba(27, 42, 35, 0.06), 0 2px 6px rgba(27, 42, 35, 0.06);
+  --shadow-lg: 0 24px 48px -12px rgba(16, 40, 30, 0.35);
   --target: 48px; /* WCAG 2.5.5 touch target on phones */
   --control: 40px; /* buttons and inputs on wide screens */
-  --sidebar: 248px;
+  --sidebar: 240px;
   --content: 1120px;
 }
 

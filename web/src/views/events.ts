@@ -4,6 +4,7 @@ import {
   avatar,
   badge,
   button,
+  confirmDialog,
   checkbox,
   empty,
   errorText,
@@ -198,7 +199,13 @@ export async function renderEvent(main: HTMLElement, id: number): Promise<void> 
   if (context.manages && event.status === 'SCHEDULED') {
     const change = (label: string, call: () => Promise<ZeloEvent>, confirmText: string) =>
       button(label, async () => {
-        if (!window.confirm(confirmText)) {
+        const confirmed = await confirmDialog({
+          title: `${label}?`,
+          message: confirmText,
+          confirmLabel: label,
+          tone: label === 'Cancelar evento' ? 'danger' : 'default',
+        });
+        if (!confirmed) {
           return;
         }
         try {
@@ -210,8 +217,8 @@ export async function renderEvent(main: HTMLElement, id: number): Promise<void> 
       }, { variant: label === 'Cancelar evento' ? 'danger' : 'secondary' });
     actions.push(
       link('Editar', `#/eventos/${id}/editar`),
-      change('Marcar como concluído', () => api.completeEvent(id), 'Marcar o evento como concluído?'),
-      change('Cancelar evento', () => api.cancelEvent(id), 'Cancelar o evento? As inscrições ficam bloqueadas.'),
+      change('Marcar como concluído', () => api.completeEvent(id), 'O evento sai da lista de agendados. A presença continua podendo ser marcada.'),
+      change('Cancelar evento', () => api.cancelEvent(id), 'O evento aparece riscado na agenda e as inscrições ficam bloqueadas.'),
     );
   }
   main.replaceChildren(

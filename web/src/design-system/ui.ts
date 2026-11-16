@@ -3,7 +3,7 @@ import { ApiError } from '../api.ts';
 import { el } from '../dom.ts';
 import { icon, type IconName } from './icons.ts';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'danger-solid' | 'sun';
 
 export function button(
   label: string,
@@ -146,16 +146,6 @@ export function avatar(fullName: string): HTMLElement {
   return el('span', { class: 'avatar', 'aria-hidden': 'true' }, initials.toUpperCase());
 }
 
-export function stat(iconName: IconName, label: string, value: string, note: string): HTMLElement {
-  return el(
-    'div',
-    { class: 'stat' },
-    el('p', { class: 'stat__label' }, icon(iconName), label),
-    el('p', { class: 'stat__value' }, value),
-    el('p', { class: 'stat__note' }, note),
-  );
-}
-
 export function pageHeader(title: string, subtitle?: string, ...actions: HTMLElement[]): HTMLElement {
   const text = el('div', { class: 'page-header__text' }, el('h1', {}, title));
   if (subtitle) {
@@ -294,4 +284,64 @@ function fieldMessage(text: string): string {
     return 'E-mail inválido.';
   }
   return 'Valor inválido.';
+}
+
+export interface DialogOptions {
+  title: string;
+  icon?: IconName;
+  tone?: 'default' | 'warning' | 'danger';
+  body: (Node | string)[];
+  actions: (close: () => void) => HTMLElement[];
+}
+
+// App modal built on <dialog>: the browser keeps focus inside, closes on Esc and dims the page behind it.
+export function openDialog(options: DialogOptions): { close: () => void; element: HTMLDialogElement } {
+  fieldCount += 1;
+  const titleId = `dialog-title-${fieldCount}`;
+  const dialog = el('dialog', { class: `dialog dialog--${options.tone ?? 'default'}`, 'aria-labelledby': titleId });
+  const close = () => dialog.close();
+  // A dialog belongs to the page that opened it: navigating away closes it.
+  window.addEventListener('hashchange', close, { once: true });
+  dialog.addEventListener('close', () => {
+    window.removeEventListener('hashchange', close);
+    dialog.remove();
+  });
+  if (options.icon) {
+    dialog.append(el('span', { class: 'dialog__icon' }, icon(options.icon)));
+  }
+  dialog.append(
+    el('h2', { class: 'dialog__title', id: titleId }, options.title),
+    el('div', { class: 'dialog__body' }, ...options.body),
+    el('div', { class: 'dialog__actions' }, ...options.actions(close)),
+  );
+  document.body.append(dialog);
+  dialog.showModal();
+  return { close, element: dialog };
+}
+
+// Replaces window.confirm: resolves true only when the person picks the confirming action.
+export function confirmDialog(options: {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  tone?: 'default' | 'warning' | 'danger';
+  icon?: IconName;
+}): Promise<boolean> {
+  return new Promise((resolve) => {
+    let confirmed = false;
+    const { element } = openDialog({
+      title: options.title,
+      icon: options.icon ?? (options.tone === 'danger' ? 'alert' : undefined),
+      tone: options.tone,
+      body: [el('p', {}, options.message)],
+      actions: (close) => [
+        button('Cancelar', close),
+        button(options.confirmLabel, () => {
+          confirmed = true;
+          close();
+        }, { variant: options.tone === 'danger' ? 'danger-solid' : 'primary' }),
+      ],
+    });
+    element.addEventListener('close', () => resolve(confirmed));
+  });
 }

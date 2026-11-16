@@ -1,6 +1,6 @@
 // Keeps the app shell available on unstable connections. API calls always go to the network:
 // attendance and beneficiary data are never cached on shared devices.
-const CACHE = 'zelo-shell-v2';
+const CACHE = 'zelo-shell-v3';
 const SHELL = ['/', '/index.html', '/logo.jpg', '/icon.svg', '/manifest.json'];
 
 self.addEventListener('install', (event) => {

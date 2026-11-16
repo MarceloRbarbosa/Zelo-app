@@ -4,6 +4,7 @@ import {
   avatar,
   badge,
   button,
+  confirmDialog,
   errorText,
   field,
   input,
@@ -24,15 +25,27 @@ const MEMBER_TYPE: Record<StaffMember['memberType'], string> = {
   COORDINATOR: 'Coordenador(a)',
 };
 
-// Admin only: register members with a provisional password and block access at once.
+// Each profile manages only the profiles below it; the admin, at the top, also manages admins.
+const RANK: Role[] = ['ROLE_ADMIN', 'ROLE_COORDINATOR', 'ROLE_VOLUNTEER'];
+
+function canManage(role: Role): boolean {
+  const own = context.profile.role;
+  return own === 'ROLE_ADMIN' || (own !== 'ROLE_VOLUNTEER' && RANK.indexOf(role) > RANK.indexOf(own));
+}
+
 export async function renderTeam(main: HTMLElement): Promise<void> {
-  if (!context.is('ROLE_ADMIN')) {
-    main.replaceChildren(message('error', 'Só a administração gerencia a equipe.'));
+  if (!context.manages) {
+    main.replaceChildren(message('error', 'Só a administração e a coordenação gerenciam a equipe.'));
     return;
   }
   const list = el('div', {}, loading());
   main.replaceChildren(
-    pageHeader('Equipe', 'Quem acessa o Zelo. Bloquear tira o acesso na hora.'),
+    pageHeader(
+      'Equipe',
+      context.is('ROLE_ADMIN')
+        ? 'Quem acessa o Zelo. Bloquear tira o acesso na hora.'
+        : 'Quem acessa o Zelo. A coordenação cadastra e bloqueia voluntários.',
+    ),
     list,
     section('Cadastrar membro', memberForm(() => void renderTeam(main))),
   );
@@ -42,14 +55,19 @@ export async function renderTeam(main: HTMLElement): Promise<void> {
       rows(
         ...staff.map((member) => {
           const actions: HTMLElement[] = [];
-          if (member.id !== context.profile.id) {
+          if (member.id !== context.profile.id && canManage(member.role)) {
             actions.push(
               member.status === 'ACTIVE'
                 ? button('Bloquear', async () => {
-                    if (!window.confirm(`Bloquear ${member.fullName}? O acesso termina na hora.`)) {
-                      return;
+                    const confirmed = await confirmDialog({
+                      title: `Bloquear ${member.fullName}?`,
+                      message: 'O acesso ao Zelo termina na hora, mesmo para quem já estiver usando. Dá para desbloquear depois.',
+                      confirmLabel: 'Bloquear',
+                      tone: 'danger',
+                    });
+                    if (confirmed) {
+                      await change(() => api.blockStaff(member.id));
                     }
-                    await change(() => api.blockStaff(member.id));
                   }, { small: true, variant: 'danger' })
                 : button('Desbloquear', () => void change(() => api.unblockStaff(member.id)), { small: true }),
             );
@@ -99,7 +117,7 @@ function memberForm(onCreated: () => void): HTMLFormElement {
   const role = field(
     'Perfil de acesso',
     select(
-      (Object.keys(ROLE_LABEL) as Role[]).map((value) => ({ value, label: ROLE_LABEL[value] })),
+      RANK.filter(canManage).map((value) => ({ value, label: ROLE_LABEL[value] })),
       'ROLE_VOLUNTEER',
     ),
   );

@@ -12,16 +12,16 @@ interface NavItem {
 
 // Daily work first; management areas in their own group.
 const NAV: NavItem[] = [
-  { href: '#/', label: 'Início', icon: 'home', visible: () => true },
+  { href: '#/', label: 'Agenda', icon: 'calendar', visible: () => true },
   { href: '#/turmas', label: 'Turmas', icon: 'book', visible: () => true },
   { href: '#/beneficiarios', label: 'Beneficiários', icon: 'people', visible: () => true },
   { href: '#/eventos', label: 'Eventos', icon: 'star', visible: () => true },
-  { href: '#/calendario', label: 'Calendário', icon: 'calendar', visible: () => true },
+  { href: '#/assistencia', label: 'Assistência', icon: 'box', visible: () => context.manages },
 ];
 
 const MANAGEMENT: NavItem[] = [
-  { href: '#/assistencia', label: 'Assistência', icon: 'box', visible: () => context.manages },
-  { href: '#/equipe', label: 'Equipe', icon: 'user', visible: () => context.is('ROLE_ADMIN') },
+  { href: '#/equipe', label: 'Equipe', icon: 'user', visible: () => context.manages },
+  { href: '#/organizacao', label: 'Organização', icon: 'shield', visible: () => context.is('ROLE_ADMIN') },
 ];
 
 const ACCOUNT: NavItem[] = [{ href: '#/perfil', label: 'Meu perfil', icon: 'settings', visible: () => true }];
